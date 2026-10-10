@@ -1,0 +1,1622 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="架空の終末世界のニュースを流し続ける1枚ページ。登場する地名・施設・組織・出来事はすべてフィクションです。">
+<style>
+html { box-sizing: border-box; padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>第七管区 緊急放送網</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* Layout: one fixed screen, three columns. Left = the bulletin, large enough to read across a room.
+   Middle = the shelter message board. Right = instruments and black-market prices.
+   Bottom = scrolling notices. Single dark look by design. */
+:root {
+  color-scheme: dark;
+  --glass: #0a1112;
+  --panel: #101a1b;
+  --line: #233738;
+  --bone: #dfe6d6;
+  --dim: #82988f;
+  --teal: #58b8a6;
+  --amber: #f0b429;
+  --orange: #ff8a2a;
+  --flare: #ff5533;
+  --lull: #f3c4d0;
+  --void: #000;
+  --ink: #0a1112;
+  --f-display: "DotGothic16", "BIZ UDGothic", "MS Gothic", monospace;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --f-data: "Share Tech Mono", "DotGothic16", ui-monospace, Menlo, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--glass);
+  color: var(--bone);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow: hidden;
+}
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.app {
+  --sev: var(--teal);
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding-inline: 16px;
+  position: relative;
+}
+.app[data-sev="1"] { --sev: var(--amber); }
+.app[data-sev="2"] { --sev: var(--orange); }
+.app[data-sev="3"] { --sev: var(--flare); }
+.app[data-sev="4"] { --sev: var(--lull); }
+
+.app.scan::after {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, .22) 2px 3px);
+  z-index: 5;
+}
+.app.flash::before {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 6px var(--sev), inset 0 0 90px -10px var(--sev);
+  animation: flash 0.9s steps(2, end) 4;
+  z-index: 6;
+}
+@keyframes flash { 50% { opacity: 0; } }
+@keyframes blink { 50% { opacity: .15; } }
+
+/* ---------- screen effects ---------- */
+.app.scan.lull::after { display: none; }
+.app.lull { filter: brightness(1.22) saturate(1.15); }
+.app.sag { filter: brightness(.2); }
+.app.shake1 { animation: shake1 .5s linear; }
+.app.shake2 { animation: shake2 .9s linear; }
+@keyframes shake1 {
+  0%, 100% { transform: none; } 20% { transform: translate(-5px, 3px); } 40% { transform: translate(4px, -4px); }
+  60% { transform: translate(-3px, -2px); } 80% { transform: translate(2px, 2px); }
+}
+@keyframes shake2 {
+  0%, 100% { transform: none; } 10% { transform: translate(-16px, 10px) rotate(-.7deg); } 20% { transform: translate(14px, -12px) rotate(.6deg); }
+  30% { transform: translate(-11px, -7px); } 40% { transform: translate(15px, 9px) rotate(-.5deg); } 50% { transform: translate(-12px, 11px); }
+  60% { transform: translate(9px, -10px) rotate(.4deg); } 70% { transform: translate(-7px, 6px); } 80% { transform: translate(5px, -4px); } 90% { transform: translate(-2px, 2px); }
+}
+.fx { position: fixed; inset: 0; z-index: 8; pointer-events: none; display: none; align-items: center; justify-content: center; }
+.fx.white { display: flex; background: var(--bone); }
+.fx.black { display: flex; background: var(--void); }
+.fx.slate {
+  display: flex; background: var(--flare); color: var(--ink);
+  font-family: var(--f-display); font-size: clamp(4rem, 24vw, 17rem); letter-spacing: .15em; text-indent: .15em;
+}
+.sagnote {
+  position: fixed; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 52px); z-index: 9;
+  font-family: var(--f-display); color: var(--amber); letter-spacing: .2em; font-size: .9rem;
+}
+
+/* ---------- header ---------- */
+.top {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 4px 20px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.station {
+  font-family: var(--f-display);
+  font-size: clamp(1rem, 1.9vw, 1.35rem);
+  letter-spacing: .08em;
+  display: flex; align-items: center; gap: 10px;
+}
+.onair { width: .7em; height: .7em; background: var(--flare); flex: none; animation: blink 1.6s steps(2, end) infinite; }
+.freq { font-family: var(--f-data); color: var(--dim); font-size: .85rem; letter-spacing: .06em; }
+.clock {
+  margin-left: auto;
+  font-family: var(--f-data); font-variant-numeric: tabular-nums;
+  color: var(--dim);
+  display: flex; gap: 14px; align-items: baseline;
+}
+.clock b { color: var(--bone); font-weight: 400; font-size: 1.25rem; }
+.ghost {
+  background: none; border: 1px solid var(--line); color: var(--dim);
+  padding: 2px 12px; cursor: pointer; font-size: .85rem; letter-spacing: .1em;
+}
+.ghost:hover { color: var(--bone); border-color: var(--dim); }
+
+/* ---------- main deck ---------- */
+.deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(236px, 24%);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0 20px;
+  min-height: 0;
+}
+.label {
+  font-size: .78rem; letter-spacing: .16em; color: var(--dim);
+  display: flex; justify-content: space-between; gap: 8px;
+}
+
+.bulletin {
+  grid-column: 1; grid-row: 1;
+  min-height: 0; overflow: hidden;
+  padding-block: 18px 14px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.hazard {
+  height: 12px; flex: none;
+  background: repeating-linear-gradient(-45deg, var(--sev) 0 14px, transparent 14px 28px);
+  opacity: .9;
+}
+.meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  font-family: var(--f-data); font-size: .92rem; color: var(--dim);
+  letter-spacing: .06em; font-variant-numeric: tabular-nums;
+}
+.sev {
+  font-family: var(--f-display);
+  background: var(--sev); color: var(--ink);
+  padding: 0 14px; font-size: 1.1rem; letter-spacing: .3em; text-indent: .3em;
+}
+.cat { color: var(--sev); font-family: var(--f-display); font-size: 1.05rem; letter-spacing: .15em; }
+.head {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 400;
+  font-size: clamp(1.5rem, 3vw, 2.7rem);
+  line-height: 1.3; letter-spacing: .02em;
+  text-wrap: balance; word-break: auto-phrase;
+}
+.body {
+  margin: 0;
+  font-size: clamp(1rem, 1.5vw, 1.28rem);
+  line-height: 1.85;
+  min-height: 5.4em;
+}
+.body.typing::after { content: "▌"; color: var(--sev); animation: blink .8s steps(2, end) infinite; }
+.origin { color: var(--dim); font-size: .88rem; letter-spacing: .05em; }
+.next {
+  margin-top: auto;
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--f-data); font-size: .85rem; color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.next .bar { flex: 1; height: 3px; background: var(--line); min-width: 0; }
+.next .bar i { display: block; height: 100%; width: 0; background: var(--sev); }
+.next .remain { min-width: 4.5em; text-align: right; }
+
+/* ---------- intercom ---------- */
+.board h2 { margin: 0 0 4px; font-size: .78rem; font-weight: 400; letter-spacing: .16em; color: var(--dim); }
+.door { --ds: var(--dim); grid-column: 1; grid-row: 2; border-top: 1px solid var(--line); padding-block: 10px 12px; }
+.door[data-state="amber"] { --ds: var(--amber); }
+.door[data-state="red"] { --ds: var(--flare); }
+.door-row { display: grid; grid-template-columns: minmax(140px, 38%) minmax(0, 1fr); gap: 14px; margin-top: 6px; align-items: start; }
+.door-info { min-width: 0; }
+.cam { position: relative; aspect-ratio: 16 / 10; max-width: 100%; background: var(--ink); border: 1px solid var(--ds); overflow: hidden; }
+.cam canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.cam span { position: absolute; font-family: var(--f-data); font-size: .66rem; color: var(--bone); letter-spacing: .06em; line-height: 1; }
+.cam .rec { top: 5px; left: 6px; color: var(--flare); animation: blink 1.2s steps(2, end) infinite; }
+.cam .camts { bottom: 5px; right: 6px; }
+.door-state {
+  display: inline-block; font-family: var(--f-display); font-size: .9rem; letter-spacing: .14em;
+  padding: 0 10px; border: 1px solid var(--ds); color: var(--ds);
+}
+.door[data-state="red"] .door-state { background: var(--flare); color: var(--ink); }
+.door-who { margin-left: 8px; font-size: .8rem; color: var(--dim); letter-spacing: .08em; }
+.door-said { margin: 6px 0 2px; font-family: var(--f-display); font-size: 1.02rem; line-height: 1.45; }
+.door-seen { margin: 0; font-size: .84rem; line-height: 1.6; }
+.door-foot { margin-top: 4px; font-family: var(--f-data); font-size: .74rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+.app.doorfocus .bulletin, .app.doorfocus .board, .app.doorfocus .instruments { opacity: .25; }
+
+/* ---------- board ---------- */
+.board {
+  grid-column: 2; grid-row: 1 / span 2;
+  border-left: 1px solid var(--line);
+  padding: 18px 0 12px 20px;
+  display: flex; flex-direction: column; min-height: 0;
+}
+.posts {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 9px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+}
+.post { font-size: .9rem; line-height: 1.55; overflow-wrap: anywhere; }
+.post .ph { display: block; font-family: var(--f-data); font-size: .72rem; color: var(--dim); letter-spacing: .03em; }
+.post .anc { color: var(--teal); margin-right: .4em; }
+.post.new { animation: arrive 1.4s ease-out; }
+@keyframes arrive { from { background: rgba(240, 180, 41, .16); } to { background: transparent; } }
+
+/* ---------- instruments ---------- */
+.instruments {
+  grid-column: 3; grid-row: 1 / span 2;
+  border-left: 1px solid var(--line);
+  padding: 18px 0 12px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  min-height: 0; overflow-y: auto;
+}
+.dose-num {
+  font-family: var(--f-data);
+  font-size: clamp(2.4rem, 4.6vw, 3.8rem);
+  line-height: 1.05; font-variant-numeric: tabular-nums;
+  color: var(--dose, var(--teal));
+}
+.dose-unit { font-family: var(--f-data); color: var(--dim); font-size: .95rem; margin-left: 6px; }
+.dose-state { color: var(--dose, var(--teal)); font-size: .88rem; letter-spacing: .08em; }
+#spark { width: 100%; height: 46px; display: block; margin-top: 4px; }
+.readings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.reading .val { font-family: var(--f-data); font-size: 1.3rem; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.reading .val small { font-size: .78rem; color: var(--dim); margin-left: 4px; }
+.meter { height: 5px; background: var(--line); margin-top: 3px; }
+.meter i { display: block; height: 100%; background: var(--teal); transition: width 1s linear; }
+.meter i.low { background: var(--orange); }
+
+.prices { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 1px; }
+.prices li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 5.2em; gap: 8px;
+  align-items: baseline; font-size: .86rem;
+}
+.prices .p { font-family: var(--f-data); font-variant-numeric: tabular-nums; text-align: right; }
+.prices .p small { color: var(--dim); margin-left: 2px; }
+.prices .c { font-family: var(--f-data); font-size: .78rem; text-align: right; color: var(--orange); font-variant-numeric: tabular-nums; }
+.prices li.hot .p { color: var(--flare); }
+.wage { margin-top: 5px; font-size: .78rem; color: var(--dim); line-height: 1.5; }
+.wage b { color: var(--teal); font-weight: 400; font-family: var(--f-data); }
+.gram { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
+.gram span { flex: 1; font-size: .84rem; min-width: 0; line-height: 1.4; }
+.gram .ghost { flex: none; white-space: nowrap; }
+.disc {
+  flex: none; width: 42px; height: 42px; border-radius: 50%; position: relative; border: 1px solid var(--line);
+  background: repeating-radial-gradient(circle, var(--ink) 0 2px, var(--line) 2px 3px);
+  animation: spin 1.8s linear infinite; animation-play-state: paused;
+}
+.disc::before { content: ""; position: absolute; left: 50%; top: 6%; width: 2px; height: 28%; background: var(--dim); }
+.disc::after { content: ""; position: absolute; inset: 34%; border-radius: 50%; background: var(--amber); }
+.gram.on .disc { animation-play-state: running; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- ticker ---------- */
+.ticker {
+  display: flex; align-items: center; gap: 14px;
+  border-top: 1px solid var(--line);
+  padding-block: 8px; font-size: .95rem;
+}
+.tk-label {
+  flex: none; font-family: var(--f-display);
+  border: 1px solid var(--amber); color: var(--amber);
+  padding: 0 10px; letter-spacing: .25em; text-indent: .25em;
+}
+.tk-track { flex: 1; min-width: 0; overflow: hidden; }
+.tk { display: inline-flex; white-space: nowrap; animation: tk 90s linear infinite; }
+.tk span { padding-right: 3.5em; }
+.tk span::before { content: "◆ "; color: var(--amber); }
+@keyframes tk { to { transform: translateX(-50%); } }
+.fiction { flex: none; font-size: .7rem; color: var(--dim); opacity: .7; letter-spacing: .05em; }
+
+/* ---------- settings ---------- */
+.settings {
+  position: fixed; right: 16px;
+  top: calc(env(safe-area-inset-top, 0px) + 54px);
+  width: min(340px, calc(100% - 32px));
+  max-height: calc(100% - 70px - env(safe-area-inset-top, 0px));
+  overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--dim);
+  padding: 16px; z-index: 10;
+  display: grid; gap: 10px;
+}
+.settings h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 1.05rem; letter-spacing: .12em; }
+.settings h3 {
+  margin: 6px 0 0; font-size: .76rem; font-weight: 400; letter-spacing: .18em; color: var(--dim);
+  border-top: 1px solid var(--line); padding-top: 10px;
+}
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .92rem; }
+.row select { background: var(--glass); border: 1px solid var(--line); padding: 4px 8px; max-width: 60%; }
+.row input[type="checkbox"] { width: 1.2em; height: 1.2em; accent-color: var(--amber); }
+.row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--amber); }
+.row input[type="file"] { min-width: 0; max-width: 62%; font-size: .78rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.solid { background: var(--amber); color: var(--ink); border: 0; padding: 6px 14px; cursor: pointer; font-weight: 700; }
+.note { margin: 0; font-size: .76rem; color: var(--dim); line-height: 1.6; }
+
+/* ---------- tablet portrait ---------- */
+@media (max-width: 1000px) {
+  .deck { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+  .bulletin { grid-column: 1 / span 2; grid-row: 1; overflow: visible; }
+  .body { min-height: 4em; }
+  .instruments { gap: 10px; }
+  #spark { height: 30px; }
+  .door { grid-column: 1 / span 2; grid-row: 2; }
+  .door-row { grid-template-columns: minmax(140px, 28%) minmax(0, 1fr); }
+  .board { grid-column: 1; grid-row: 3; border-left: 0; border-top: 1px solid var(--line); padding-left: 0; }
+  .instruments { grid-column: 2; grid-row: 3; border-top: 1px solid var(--line); }
+  .head { font-size: clamp(1.6rem, 5vw, 3rem); }
+  .body { font-size: clamp(1rem, 2.3vw, 1.3rem); }
+}
+/* ---------- phone ---------- */
+@media (max-width: 600px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; }
+  .deck { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .bulletin, .door, .board, .instruments { grid-column: 1; grid-row: auto; overflow: visible; }
+  .door-row { grid-template-columns: minmax(0, 1fr); }
+  .instruments { border-left: 0; padding-left: 0; }
+  .posts { height: 21rem; flex: none; }
+  .clock { margin-left: 0; }
+  .fiction { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tk, .onair, .app.flash::before, .body.typing::after, .post.new, .disc, .cam .rec, .app.shake1, .app.shake2 { animation: none; }
+  .meter i { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="app scan" id="app" data-sev="2">
+  <header class="top">
+    <div class="station"><span class="onair" aria-hidden="true"></span>第七管区 緊急放送網<span class="freq">KB-7 / 4.625MHz</span></div>
+    <div class="clock"><span id="era"></span><b id="clock">--:--:--</b></div>
+    <button class="ghost" id="openSettings" type="button" aria-expanded="false" aria-controls="settings">設定</button>
+  </header>
+
+  <main class="deck">
+    <section class="bulletin" aria-live="polite">
+      <div class="hazard" aria-hidden="true"></div>
+      <div class="meta">
+        <span class="sev" id="sev">警報</span>
+        <span class="cat" id="cat"></span>
+        <span id="num"></span>
+        <span id="issued"></span>
+      </div>
+      <h1 class="head" id="head"></h1>
+      <p class="body" id="body"></p>
+      <div class="origin" id="origin"></div>
+      <div class="next">
+        <span>次の速報まで</span>
+        <div class="bar"><i id="bar"></i></div>
+        <span class="remain" id="remain"></span>
+      </div>
+    </section>
+
+    <section class="door" id="door" data-state="idle" aria-live="polite">
+      <div class="label"><span>玄関インターホン</span><span id="doorCam">CAM-03</span></div>
+      <div class="door-row">
+        <div class="cam"><canvas id="cam" width="176" height="110" aria-hidden="true"></canvas><span class="rec">● REC</span><span class="camts" id="camTs"></span></div>
+        <div class="door-info">
+          <div><span class="door-state" id="doorState">来訪者なし</span><span class="door-who" id="doorWho"></span></div>
+          <p class="door-said" id="doorSaid"></p>
+          <p class="door-seen" id="doorSeen"></p>
+          <div class="door-foot" id="doorFoot"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="board" aria-label="掲示板">
+      <h2 id="boardTitle">管区掲示板</h2>
+      <div class="posts" id="posts"></div>
+    </section>
+
+    <aside class="instruments" aria-label="観測値">
+      <div>
+        <div class="label"><span>空間線量</span><span id="doseSite">KB-7 屋上観測点</span></div>
+        <div><span class="dose-num" id="dose">1.20</span><span class="dose-unit">μSv/h</span></div>
+        <div class="dose-state" id="doseState">屋外活動 可</div>
+        <canvas id="spark" aria-hidden="true"></canvas>
+      </div>
+      <div class="readings">
+        <div class="reading"><div class="label">外気温</div><div class="val"><span id="temp">-9.4</span><small>℃</small></div></div>
+        <div class="reading"><div class="label">風</div><div class="val"><span id="wind">北西 6</span><small>m/s</small></div></div>
+        <div class="reading"><div class="label">給水残量</div><div class="val"><span id="water">41</span><small>%</small></div><div class="meter"><i id="waterBar"></i></div></div>
+        <div class="reading"><div class="label">電力</div><div class="val"><span id="power">63</span><small>%</small></div><div class="meter"><i id="powerBar"></i></div></div>
+      </div>
+      <div>
+        <div class="label"><span>闇市相場</span><span>今朝比</span></div>
+        <ul class="prices" id="prices"></ul>
+        <div class="wage" id="wage"></div>
+      </div>
+      <div>
+        <div class="label">館内蓄音機</div>
+        <div class="gram" id="gramBox"><i class="disc" aria-hidden="true"></i><span id="gram">停止中</span><button class="ghost" id="gramBtn" type="button">再生</button></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="ticker">
+    <span class="tk-label">通達</span>
+    <div class="tk-track"><div class="tk" id="tk"></div></div>
+    <span class="fiction">この放送はフィクションです</span>
+  </footer>
+
+  <div class="settings" id="settings" hidden>
+    <h2>受信機の設定</h2>
+    <label class="row" for="interval">速報の間隔
+      <select id="interval">
+        <option value="10">10秒</option>
+        <option value="20">20秒</option>
+        <option value="30">30秒</option>
+        <option value="60">1分</option>
+        <option value="120">2分</option>
+        <option value="300">5分</option>
+        <option value="600">10分</option>
+      </select>
+    </label>
+    <label class="row" for="optSound">警報音・呼び鈴<input type="checkbox" id="optSound"></label>
+    <label class="row" for="optVoice" id="voiceRow">読み上げ<input type="checkbox" id="optVoice"></label>
+
+    <h3>館内蓄音機</h3>
+    <label class="row" for="piece">曲
+      <select id="piece">
+        <option value="both">2曲を交互に</option>
+        <option value="air">G線上のアリア</option>
+        <option value="canon">パッヘルベルのカノン</option>
+        <option value="file" disabled>自分の曲（未読み込み）</option>
+      </select>
+    </label>
+    <label class="row" for="songFile">自分の曲<input type="file" id="songFile" accept="audio/*"></label>
+    <label class="row" for="optDamage">壊れ具合<input type="range" id="optDamage" min="0" max="100" step="1"></label>
+    <label class="row" for="optVol">音量<input type="range" id="optVol" min="0" max="100" step="1"></label>
+
+    <h3>画面</h3>
+    <label class="row" for="optScan">走査線<input type="checkbox" id="optScan" checked></label>
+    <label class="row" for="optFx">画面の揺れ・明滅<input type="checkbox" id="optFx" checked></label>
+    <div class="btns">
+      <button class="solid" id="nowBtn" type="button">今すぐ次の速報</button>
+      <button class="ghost" id="doorBtn" type="button">来訪者を呼ぶ</button>
+      <button class="ghost" id="fsBtn" type="button">全画面</button>
+      <button class="ghost" id="closeSettings" type="button">閉じる</button>
+    </div>
+    <p class="note">地名・施設・組織はすべて架空です。読み込んだ曲はこの端末の中だけで処理され、ページを閉じると消えます。「画面の揺れ・明滅」は急な明るさの変化を含みます。苦手な方は切ってください。</p>
+  </div>
+</div>
+<div class="fx" id="fx" aria-hidden="true"></div>
+<div class="sagnote" id="sagnote" hidden>主電源 瞬断</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const R = a => a[Math.floor(Math.random() * a.length)];
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pad = n => String(n).padStart(2, '0');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  /* ================= 架空の固有名詞 ================= */
+  const P1 = ['灰', '錆', '朽', '鉛', '煤', '骸', '澱', '燐', '凍', '鳴'];
+  const P2 = ['ヶ淵', '津原', '見沢', 'ノ瀬', '守野', '渡', '崎台', '沼辺', '降'];
+  const place = () => R(P1) + R(P2);
+  const FAC = [
+    () => `第${ri(2, 19)}濾過塔`, () => '旧送電中継所', () => '地下配給庫', () => '気象観測塔',
+    () => '浄水プラント', () => '貨物索道駅', () => '種子保管庫', () => `第${ri(2, 9)}冷却池`,
+    () => '燃料備蓄基地', () => '遮蔽ドーム管理棟', () => '旧通信局舎', () => `第${ri(3, 40)}検問所`,
+    () => '地下貯水槽', () => '焼却処理場'
+  ];
+  const fac = () => R(FAC)();
+  const ORG = ['管区保全局', '臨時統治評議会', '第七管区防災司令部', '配給公社', '放射線監視班', '自警連絡会'];
+  const org = () => R(ORG);
+  const DIR = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
+  const ago = () => {
+    const d = new Date(Date.now() - ri(3, 40) * 60000);
+    return `${d.getHours()}時${pad(d.getMinutes())}分`;
+  };
+  const later = () => `${(new Date().getHours() + ri(1, 5)) % 24}時`;
+
+  /* ================= 闇市相場 ================= */
+  const PR = [
+    { k: 'water', n: '飲料水 1L', p: 38 }, { k: 'bread', n: '乾パン 1袋', p: 120 },
+    { k: 'can', n: '缶詰 1個', p: 260 }, { k: 'mask', n: '濾過マスク', p: 540 },
+    { k: 'cell', n: '単三電池 1本', p: 95 }, { k: 'oil', n: '灯油 1L', p: 310 },
+    { k: 'med', n: '抗生剤 1錠', p: 880 }
+  ];
+  PR.forEach(x => { x.base = x.p; x.hot = 0; });
+  const item = k => PR.find(i => i.k === k);
+  let wage = 40, redenom = 0;
+  const wageDays = ri(300, 900);
+  const fmtP = v => v >= 1e8 ? (v / 1e8).toFixed(v >= 1e9 ? 0 : 1) + '億'
+    : v >= 1e4 ? (v / 1e4).toFixed(v >= 1e5 ? 0 : 1) + '万'
+    : Math.max(1, Math.round(v)).toLocaleString('ja-JP');
+  const wageText = () => wage >= 1 ? `${Math.round(wage)}券` : '1券未満';
+  const pending = [];
+
+  function renderPrices() {
+    const ul = $('prices'); ul.textContent = '';
+    const now = Date.now();
+    PR.forEach(x => {
+      const li = document.createElement('li');
+      if (now - x.hot < 2500) li.className = 'hot';
+      const n = document.createElement('span'); n.textContent = x.n;
+      const p = document.createElement('span'); p.className = 'p'; p.textContent = fmtP(x.p);
+      const u = document.createElement('small'); u.textContent = '券'; p.append(u);
+      const pct = (x.p / x.base - 1) * 100;
+      const c = document.createElement('span'); c.className = 'c';
+      c.textContent = '▲' + (pct < 1000 ? pct.toFixed(1) : fmtP(pct)) + '%';
+      li.append(n, p, c); ul.append(li);
+    });
+    const w = $('wage'); w.textContent = '';
+    w.append('日当（瓦礫撤去） ');
+    const b = document.createElement('b'); b.textContent = wageText(); w.append(b);
+    w.append(`　据え置き ${wageDays}日目`);
+  }
+  function hike(k, lo, hi) { const x = item(k); x.p *= 1 + lo + Math.random() * (hi - lo); x.hot = Date.now(); }
+  function priceTick() {
+    hike(R(PR).k, 0.002, 0.014);
+    if (Math.max(...PR.map(i => i.p)) >= 1e9) {
+      PR.forEach(x => { x.p /= 1e6; x.base = x.p; });
+      wage /= 1e6; redenom++;
+      const n = redenom;
+      pending.push({ wait: 0, make: () => ({ sev: 1, cat: '経済', where: '管区全域',
+        head: `第${n}次新券へ切り替え　100万旧券を1新券に`,
+        body: `配給公社は、桁が増えすぎた券を新しい券に切り替えます。旧券100万枚が新券1枚です。日当も同じ割合で切り替えるため、${wageText()}になります。旧券は焚きつけに使えます。` }) });
+    }
+    renderPrices();
+  }
+  const HIKES = { '給水': ['water', .12, .4], '気象': ['mask', .08, .3], '放射線': ['mask', .1, .35], '電力': ['cell', .1, .3],
+    '食料': ['bread', .15, .45], '衛生': ['med', .15, .5], '火災': ['oil', .1, .3], '交通': ['can', .08, .25], '爆発': ['oil', .05, .2] };
+
+  /* ================= 速報のひな型 ================= */
+  const T = [
+    () => { const p = place(), f = fac(); return { sev: 3, cat: '爆発', where: p,
+      head: `${p}の${f}で爆発　原因は不明`,
+      body: `${ago()}ごろ、${p}の${f}で大規模な爆発が確認されました。${org()}は半径${ri(3, 12)}キロ圏内に屋内退避を指示しています。現場との通信は途絶えており、被害の全容は分かっていません。` }; },
+    () => { const p = place(); return { sev: 3, cat: '爆破', where: p,
+      head: `${p}で「記録にない施設」が爆破される`,
+      body: `${ago()}ごろ、${p}の外縁部にある建造物が何者かに爆破されました。${org()}は、この建造物がどの台帳にも記載されておらず、用途も管理者も分からないと説明しています。跡地には近づかないでください。` }; },
+    () => { const p = place(), f = fac(); return { sev: 2, cat: '爆破', where: p,
+      head: `${f}が爆破される　${p}、犯行声明なし`,
+      body: `${org()}によりますと、${p}の${f}が${ago()}ごろ爆破されました。これで今月${ri(3, 9)}件目です。当直の${ri(2, 7)}名と連絡が取れていません。` }; },
+    () => { const p = place(); return { sev: 2, cat: '予告', where: p,
+      head: `${p}大橋に爆破予告　通行を全面停止`,
+      body: `${org()}あてに、${p}大橋を${later()}に爆破するとの通告が届きました。橋は閉鎖され、対岸の居住区は孤立しています。渡し船の運航予定はありません。` }; },
+    () => { const p = place(), d = ri(180, 960) / 10; return { sev: 3, cat: '放射線', where: p, dose: d,
+      head: `${p}で線量が急上昇　毎時${d.toFixed(1)}マイクロシーベルト`,
+      body: `${p}観測点で毎時${d.toFixed(1)}マイクロシーベルトを記録しました。平常値のおよそ${Math.round(d / 1.2)}倍です。風は${R(DIR)}へ流れています。外出を控え、窓のすき間をふさいでください。` }; },
+    () => { const p = place(), d = ri(60, 170) / 10; return { sev: 2, cat: '放射線', where: p, dose: d,
+      head: `降下物が接近　${p}で毎時${d.toFixed(1)}マイクロシーベルト`,
+      body: `${R(DIR)}からの風に乗って降下物が流れ込んでいます。${p}では屋外での作業を30分以内に制限します。洗濯物と飲料水の容器を屋内に入れてください。` }; },
+    () => { const p = place(); return { sev: 2, cat: '気象', where: p,
+      head: `黒い雨、${later()}ごろから${p}一帯で`,
+      body: `${org()}は${p}一帯に黒い雨の予報を出しました。雨水は飲まず、肌に触れた場合はすぐに洗い流してください。貯水槽のふたを閉めてください。` }; },
+    () => { const p = place(); return { sev: 1, cat: '放射線', where: p,
+      head: `線量計の配布を停止　${org()}「在庫なし」`,
+      body: `${p}の配布所で続いていた線量計の貸し出しが、本日で終了しました。次の入荷は未定です。手持ちの線量計は電池を抜いて保管するよう呼びかけています。` }; },
+    () => { const p = place(), n = ri(2, 9); return { sev: 3, cat: '設備', where: p,
+      head: `${p}の遮蔽ドームに亀裂　長さ${ri(4, 60)}メートル`,
+      body: `${ago()}ごろ、${p}の遮蔽ドーム北面で亀裂が見つかりました。第${n}区から第${n + 2}区の住民は下層へ移動してください。補修材は不足しています。` }; },
+    () => { const p = place(); return { sev: 2, cat: '設備', where: p,
+      head: `${p}の冷却池、水位が基準を下回る`,
+      body: `${p}の冷却池の水位が、管理基準を${ri(20, 140)}センチ下回りました。${org()}は注水を続けていますが、ポンプ${ri(2, 5)}基のうち動いているのは1基です。` }; },
+    () => { const n = ri(2, 19); return { sev: 2, cat: '給水', where: '管区全域',
+      head: `第${n}濾過塔が停止　給水制限へ`,
+      body: `第${n}濾過塔がろ材の劣化で停止しました。飲料水の配給は当面、1人1日${ri(1, 3)}リットルです。配給所には容器を持参してください。` }; },
+    () => { const n = ri(11, 88); return { sev: 1, cat: '配給', where: '管区全域',
+      head: `配給券${n}号は本日で失効`,
+      body: `配給券${n}号までは、本日の日没で使えなくなります。${org()}は交換に応じません。新しい券の発行日は決まっていません。` }; },
+    () => { const p = place(); return { sev: 1, cat: '電力', where: p,
+      head: `計画停電を1日${ri(9, 20)}時間に延長`,
+      body: `燃料の到着が遅れているため、${p}を含む${ri(3, 8)}地区で停電時間を延ばします。暖房のない世帯は、最寄りの集会殻に集まってください。` }; },
+    () => { const p = place(), n = ri(3, 21); return { sev: 2, cat: '通信', where: p,
+      head: `${p}居住区と連絡途絶　${n}日目`,
+      body: `${p}居住区からの定時連絡が${n}日間ありません。${org()}が送った連絡員${ri(2, 6)}名も戻っていません。同居住区あての郵便と配給は止めています。` }; },
+    () => { const p = place(); return { sev: 1, cat: '通信', where: p,
+      head: `未登録の放送を受信　発信元は${p}方面`,
+      body: `${ago()}から、登録のない短波放送が受信されています。内容は数字の読み上げの繰り返しです。${org()}は、この放送に応答しないよう求めています。` }; },
+    () => ({ sev: 2, cat: '通信', where: '軌道',
+      head: '最後の観測衛星からの信号が途絶える',
+      body: `${ago()}を最後に、観測衛星からの信号が届かなくなりました。気象予報は今後、地上の観測塔${ri(2, 5)}基の記録だけで作成します。精度は大きく下がります。` }),
+    () => { const p = place(), t = ago(); return { sev: 0, cat: '異常', where: p,
+      head: `${p}の時計がすべて${t}で停止`,
+      body: `${p}の居住区で、機械式を含むすべての時計が${t}を指したまま止まっています。${org()}は原因を調べています。体調の変化を感じた方は申し出てください。` }; },
+    () => { const p = place(); return { sev: 1, cat: '異常', where: p,
+      head: `地下${ri(4, 13)}層から叩く音　${p}`,
+      body: `${p}の封鎖された地下層から、一定の間隔で壁を叩く音が続いています。この層は${ri(6, 30)}年前に埋め戻されています。${org()}は立ち入りを禁じました。` }; },
+    () => { const p = place(); return { sev: 0, cat: '異常', where: p,
+      head: `${p}の夜空に発光体　${org()}「気象現象」`,
+      body: `昨夜から${p}の上空で、青白い光が${ri(2, 7)}時間にわたり観測されました。${org()}は気象現象だとしています。光を見つめ続けないでください。` }; },
+    () => { const p = place(); return { sev: 1, cat: '異常', where: p,
+      head: `${p}に、地図にない道路`,
+      body: `${p}の東側に、どの地図にも載っていない舗装路が見つかりました。路面は新しく、わだちがあります。${org()}は、道の先へ進まないよう呼びかけています。` }; },
+    () => { const p = place(); return { sev: 2, cat: '気象', where: p,
+      head: `灰嵐警報　${p}で視界${ri(2, 30)}メートル`,
+      body: `強い${R(DIR)}風で灰が巻き上がっています。${p}では視界が極端に悪くなっています。濾過マスクのない方は外に出ないでください。嵐は${later()}ごろまで続く見込みです。` }; },
+    () => ({ sev: 1, cat: '気象', where: '管区全域',
+      head: `気温、${ri(9, 60)}日連続で氷点下`,
+      body: `観測塔の記録によりますと、日中の最高気温は氷点下${ri(4, 22)}度でした。配管の凍結が相次いでいます。水は少しずつ流したままにしてください。` }),
+    () => ({ sev: 0, cat: '気象', where: '管区全域',
+      head: `太陽を観測　${ri(40, 400)}日ぶり`,
+      body: `${ago()}から約${ri(3, 25)}分間、雲の切れ間に太陽が確認されました。直接見ると目を傷めます。次に見られる時期は予測できません。` }),
+    () => { const p = place(); return { sev: 2, cat: '衛生', where: p,
+      head: `${p}で原因不明の発熱　隔離線を設定`,
+      body: `${p}の第${ri(2, 9)}区で、同じ症状の発熱が${ri(8, 70)}名に出ています。${org()}は区の出入口を封鎖しました。区内への配給は投下で行います。` }; },
+    () => { const p = place(); return { sev: 1, cat: '食料', where: p,
+      head: `${p}温室群、作物の${ri(4, 9)}割が枯死`,
+      body: `${p}の温室群で、収穫前の作物が一晩で枯れました。土壌の検査は機材の故障で行えません。今期の野菜配給は中止します。` }; },
+    () => { const p = place(); return { sev: 1, cat: '治安', where: p,
+      head: `野犬の群れ、${p}の外縁に`,
+      body: `${p}の外縁で、${ri(30, 200)}頭ほどの野犬の群れが目撃されています。日没後は外縁の通路を使わないでください。見張り塔が照明弾で知らせます。` }; },
+    () => ({ sev: 1, cat: '治安', where: '管区全域',
+      head: `夜間外出禁止、${ri(15, 18)}時からに前倒し`,
+      body: `${org()}は、夜間外出禁止の開始時刻を早めると発表しました。理由は説明されていません。違反した場合、配給券を没収します。` }),
+    () => { const n = ri(3, 40); return { sev: 1, cat: '交通', where: '管区境界',
+      head: `第${n}検問所を閉鎖　再開の予定なし`,
+      body: `管区境界の第${n}検問所が${ago()}に閉鎖されました。向こう側にいる方の帰還手続きは受け付けていません。荷物の受け渡しもできません。` }; },
+    () => { const p = place(); return { sev: 2, cat: '交通', where: p,
+      head: `避難列車、${p}駅発を最後に運行終了`,
+      body: `避難列車は、${later()}の${p}駅発が最終便です。乗車できるのは${ri(120, 600)}名までです。線路の先の状況は確認できていません。` }; },
+    () => { const p = place(); return { sev: 1, cat: '捜索', where: p,
+      head: `${p}調査隊${ri(5, 14)}名の捜索を打ち切り`,
+      body: `${ri(8, 30)}日前に出発した${p}調査隊について、${org()}は捜索の終了を決めました。最後の通信は「建物の中に明かりが見える」でした。` }; },
+    () => { const p = place(); return { sev: 1, cat: '海域', where: p,
+      head: `${p}沖の海面が変色　魚が大量に浮く`,
+      body: `${p}沖およそ${ri(2, 15)}キロの範囲で、海面が赤茶色に変わっています。浮いた魚は食べないでください。製塩所は操業を止めました。` }; },
+    () => ({ sev: 2, cat: '行政', where: '管区全域',
+      head: '臨時統治評議会が解散を発表',
+      body: `評議会は${ago()}、定足数に届かないことを理由に解散を発表しました。後任の機関は決まっていません。配給と給水は当面、これまでの手順で続けます。` }),
+    () => ({ sev: 0, cat: '局から', where: 'KB-7',
+      head: `当局の発電用燃料、残り${ri(4, 19)}日分`,
+      body: `この放送を続けるための燃料が少なくなっています。夜間は出力を下げます。聞こえにくくなっても、周波数は変えないでください。` }),
+    () => ({ sev: 0, cat: '局から', where: 'KB-7',
+      head: '行方不明者の読み上げ、本日は中止',
+      body: `届け出が${ri(900, 4800)}件を超え、放送時間内に読み上げられなくなりました。名簿は各区の集会殻に貼り出します。追記は鉛筆でお願いします。` }),
+    () => ({ sev: 0, cat: '局から', where: 'KB-7',
+      head: '館内蓄音機の盤、残り2枚',
+      body: `放送の合間に流している音楽は、割れずに残った盤が2枚だけになりました。針も替えがありません。音が飛んでも、放送は続いています。` }),
+    () => { const p = place(), f = fac(); return { sev: 2, cat: '火災', where: p,
+      head: `${p}の${f}で火災　消火用水なし`,
+      body: `${ago()}ごろ、${p}の${f}から出火しました。消火に使える水がないため、${org()}は周囲の建物を取り壊して延焼を防いでいます。煙は有害です。風下に入らないでください。` }; },
+    () => { const p = place(); return { sev: 3, cat: '避難', where: p,
+      head: `${p}全域に退去命令　猶予は${ri(2, 9)}時間`,
+      body: `${org()}は${p}の全住民に退去を命じました。理由は公表されていません。持ち出せる荷物は1人1つです。集合場所は各区の検問所前です。` }; },
+    /* ---- 経済：止まったままの暮らしと、上がり続ける値段 ---- */
+    () => { const x = item('bread'); return { sev: 1, cat: '経済', where: '闇市',
+      head: `乾パン1袋が${fmtP(x.p)}券に　日当${fmtP(Math.ceil(x.p / wage))}日分`,
+      body: `闇市の乾パンは今朝から${((x.p / x.base - 1) * 100).toFixed(1)}%上がりました。日当は${wageDays}日間、${wageText()}のまま据え置かれています。売り手は「券はいらない、物を持ってこい」と話しています。` }; },
+    () => { const x = item('water'); return { sev: 1, cat: '経済', where: '闇市',
+      head: `飲料水1リットル、${fmtP(x.p)}券を突破`,
+      body: `値上がりは${ri(40, 400)}日連続です。一方で、闇市の取引件数は先月の${ri(2, 6)}割に減りました。値段は上がっていますが、売る物も、買える人も減っています。` }; },
+    () => ({ sev: 0, cat: '経済', where: '管区全域',
+      head: `日当、${wageDays}日連続で据え置き　${org()}「財源なし」`,
+      body: `瓦礫撤去と見張りの日当は、今期も${wageText()}のままです。作業に出る人は${ri(3, 8)}割減りました。${org()}は、働いた分を現物で払う案も「払う現物がない」として見送りました。` }),
+    () => ({ sev: 1, cat: '経済', where: '管区全域',
+      head: '配給公社、券の増刷を発表',
+      body: `不足する財源を補うため、配給公社は券を${ri(2, 9)}倍に刷り増します。紙が足りないため、新しい券は旧名簿の裏に印刷します。闇市では発表の直後から値札の書き換えが始まりました。` }),
+    () => ({ sev: 0, cat: '経済', where: '闇市',
+      head: '闇市、券での支払いを断る店が半数に',
+      body: `${org()}の調べでは、券を受け取らない売り手が半数を超えました。交換に使われているのは電池、抗生剤、靴底です。値札は朝と夕方で書き換えられています。` })
+  ];
+
+  /* ---- 親切そうな放送（発信元は不明）と、そのあとに出る訂正 ---- */
+  const LURES = [
+    () => { const p = place(), h = ri(0, 3); return { offer: 'あたたかい食事', where: p,
+      head: `あたたかい食事をご用意しました　${p}の旧倉庫へ`,
+      body: `みなさま、長いあいだ本当にお疲れさまでした。今夜${h}時、${p}の旧倉庫で、あたたかい汁物と毛布をお配りします。配給券はいりません。ご家族そろって、灯りを持たずにお越しください。ほかの区の方には、どうか知らせないでください。` }; },
+    () => { const p = place(); return { offer: '無料の診察', where: p,
+      head: `診察とお薬を無料で　${p}の仮設診療所`,
+      body: `熱やせきでお困りの方へ。${p}の仮設診療所で、診察とお薬を無料でお渡しします。付き添いは必要ありません。おひとりずつ、裏口からお入りください。お帰りの時間は、ご家族に伝えなくて大丈夫です。` }; },
+    () => { const p = place(); return { offer: '南の居住地への移住', where: p,
+      head: `南の居住地へ移れます　席は十分にあります`,
+      body: `${p}の索道駅から、南の居住地へ向かう便が出ます。向こうには水も畑もあります。荷物は必要ありません。身分票は入口でお預かりします。選ばれたみなさまだけへのご案内です。お静かにお集まりください。` }; },
+    () => { const p = place(); return { offer: 'ご家族との再会', where: p,
+      head: `行方不明のご家族が見つかりました`,
+      body: `お待たせしました。ご家族が見つかりました。お名前はここでは申し上げられませんが、${p}の集会殻であなたを待っています。心当たりのある方は、今夜、おひとりでお越しください。きっと喜ばれます。` }; },
+    () => { const p = place(); return { offer: '「外は安全」', where: p,
+      head: `外はもう安全です　${p}の広場へどうぞ`,
+      body: `よいお知らせです。${p}の線量は下がりました。もうマスクは必要ありません。窓を開けて、みなさまで広場に出てきてください。迎えの車が順番にお連れします。行き先は、着いてからのお楽しみです。` }; }
+  ];
+  function makeLure() {
+    const l = R(LURES)(), t = new Date();
+    const n = ri(12, 140);
+    const traces = R(['並べて置かれた靴', 'まだ温かい鍋', '轍と、開いたままの扉', '名前を書いた紙の束']);
+    pending.push({ wait: ri(2, 4), make: () => ({ sev: 3, cat: '訂正', where: l.where, after: 'lure',
+      head: `「${l.offer}」の放送は当局のものではありません`,
+      body: `${hhmm(t)}に流れた案内は、登録のない送信所からのものです。${l.where}に向かった${n}名と連絡が取れていません。現地に残っていたのは、${traces}だけでした。同じ声の放送には従わないでください。` }) });
+    return { sev: 4, cat: 'ご案内', where: l.where, head: l.head, body: l.body, lure: true, org: '不明（認証符号なし）' };
+  }
+
+  const NOTICES = [
+    () => `次回給水 ${place()} ${ri(5, 19)}時　容器持参`,
+    () => `配給券${ri(11, 88)}号 本日失効`,
+    () => `合言葉は${ri(0, 23)}時に変更済み`,
+    () => `${place()}方面の道路 通行不可`,
+    () => `夜間外出禁止 ${ri(15, 18)}時〜翌5時`,
+    () => `線量計の校正 第${ri(2, 9)}区集会殻にて`,
+    () => '行方不明者の届出窓口は閉鎖中',
+    () => `濾過マスクの交換目安 ${ri(6, 40)}時間`,
+    () => '雨水を飲まないでください',
+    () => 'この周波数を維持してください',
+    () => '認証符号のない放送に従わないでください',
+    () => `${place()}集会殻 暖房稼働中`,
+    () => `燃料の持ち出しは1世帯${ri(1, 4)}リットルまで`,
+    () => '日没後に窓の明かりを漏らさないでください',
+    () => `闇市の値札は朝夕2回書き換えられます`
+  ];
+
+  /* ================= 状態 ================= */
+  const SEV = ['情報', '注意', '警報', '緊急', '案内'];
+  const app = $('app');
+  const prefs = { interval: 30, sound: false, voice: false, scan: true, piece: 'both', damage: 60, vol: 70, fx: true };
+  try { Object.assign(prefs, JSON.parse(localStorage.getItem('kb7-prefs') || '{}')); } catch (e) {}
+  if (!['both', 'air', 'canon'].includes(prefs.piece)) prefs.piece = 'both';
+  const save = () => {
+    try {
+      const o = Object.assign({}, prefs); if (o.piece === 'file') o.piece = 'both';
+      localStorage.setItem('kb7-prefs', JSON.stringify(o));
+    } catch (e) {}
+  };
+
+  let deck = [];
+  let sinceLure = 0;
+  function draw(seed) {
+    if (!seed) {
+      pending.forEach(p => p.wait--);
+      const i = pending.findIndex(p => p.wait <= 0);
+      if (i >= 0) return pending.splice(i, 1)[0].make();
+      sinceLure++;
+      if (!pending.some(p => p.wait > 0) && Math.random() < (sinceLure > 5 ? 0.3 : 0.04)) { sinceLure = 0; return makeLure(); }
+    }
+    if (!deck.length) deck = T.map((_, i) => i).sort(() => Math.random() - 0.5);
+    return T[deck.pop()]();
+  }
+  let serial = ri(300, 900);
+  let current = null;
+  let nextAt = 0, typeTimer = 0;
+
+  /* ================= 画面演出 ================= */
+  const fxEl = $('fx');
+  let fxT = 0, lureHot = 0;
+  const fxOn = () => prefs.fx && !reduced;
+  function fxShow(cls, ms, text) {
+    fxEl.className = 'fx ' + cls; fxEl.textContent = text || '';
+    clearTimeout(fxT); fxT = setTimeout(() => { fxEl.className = 'fx'; fxEl.textContent = ''; }, ms);
+  }
+  function shake(level, ms) {
+    app.classList.remove('shake1', 'shake2'); void app.offsetWidth;
+    app.classList.add('shake' + level); setTimeout(() => app.classList.remove('shake' + level), ms + 30);
+  }
+  function borderFlash() {
+    app.classList.remove('flash'); void app.offsetWidth; app.classList.add('flash');
+    setTimeout(() => app.classList.remove('flash'), 3700);
+  }
+  function screenFx(b) {
+    if (!fxOn()) return;
+    if (b.sev === 3) {            // 白く飛ぶ → 赤い全画面 → 揺れながら戻る（白い閃光は1回だけ）
+      fxShow('white', 90);
+      setTimeout(() => { fxShow('slate', 850, b.after ? '訂正' : '緊急'); shake(2, 900); }, 90);
+      setTimeout(() => { shake(1, 500); borderFlash(); }, 960);
+    } else if (b.sev === 2) {     // 一瞬の暗転
+      fxShow('black', 220);
+      setTimeout(() => { shake(1, 500); borderFlash(); }, 220);
+    }
+  }
+  function sag() {                // 主電源の瞬断：画面が落ち、蓄音機の回転も沈む
+    if (fxOn()) {
+      app.classList.add('sag'); $('sagnote').hidden = false;
+      rec.forceDroop = true; power = Math.max(12, power - ri(8, 20));
+      setTimeout(() => {
+        app.classList.remove('sag'); $('sagnote').hidden = true;
+        if (Math.random() < 0.4) setTimeout(() => { app.classList.add('sag'); setTimeout(() => app.classList.remove('sag'), 200); }, 400);
+      }, ri(500, 2600));
+    }
+    setTimeout(sag, ri(70000, 200000));
+  }
+
+  function typeOut(el, text, instant) {
+    clearInterval(typeTimer);
+    if (instant || reduced) { el.textContent = text; el.classList.remove('typing'); return; }
+    el.textContent = ''; el.classList.add('typing');
+    let i = 0;
+    typeTimer = setInterval(() => {
+      i += 2; el.textContent = text.slice(0, i);
+      if (i >= text.length) { clearInterval(typeTimer); el.classList.remove('typing'); }
+    }, 40);
+  }
+
+  function issue(instant) {
+    const b = draw(false);
+    b.at = new Date(); b.no = ++serial; b.org = b.org || org();
+    current = b;
+    app.dataset.sev = b.sev;
+    $('sev').textContent = SEV[b.sev];
+    $('cat').textContent = b.cat;
+    $('num').textContent = `第${String(b.no).padStart(4, '0')}報`;
+    $('issued').textContent = `${hhmm(b.at)} ${b.lure ? '受信' : '発表'}`;
+    $('head').textContent = b.head;
+    typeOut($('body'), b.body, instant);
+    $('origin').textContent = `発信：${b.org}　／　対象：${b.where}`;
+    if (b.dose) { doseTarget = b.dose; $('doseSite').textContent = `${b.where}観測点`; }
+    const hk = HIKES[b.cat]; if (hk) { hike(hk[0], hk[1], hk[2]); renderPrices(); }
+    app.classList.toggle('lull', !!b.lure);     // 親切そうな放送のあいだだけ、画面が不自然に明るく、きれいになる
+    if (!instant) {
+      screenFx(b);
+      if (b.lure) lureHot = Date.now();
+      chime(b.sev);
+      speak(`${b.lure ? 'お知らせします' : SEV[b.sev]}。${b.head}。${b.body}`);
+      reactTo(b);
+    }
+    nextAt = Date.now() + prefs.interval * 1000;
+  }
+
+  function tick() {
+    const d = new Date();
+    $('clock').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    $('era').textContent = `終暦${d.getFullYear() - 1989}年 ${d.getMonth() + 1}月${d.getDate()}日`;
+    $('camTs').textContent = `${hhmm(d)}:${pad(d.getSeconds())}`;
+    if (door.v) { const e = Math.floor((Date.now() - door.t0) / 1000); $('doorFoot').textContent = `呼び出しから ${Math.floor(e / 60)}:${pad(e % 60)} ／ 施錠中 ／ 応答しないでください`; }
+    const total = prefs.interval * 1000;
+    const left = Math.max(0, nextAt - Date.now());
+    $('bar').style.width = `${Math.min(100, (1 - left / total) * 100)}%`;
+    const s = Math.ceil(left / 1000);
+    $('remain').textContent = s >= 60 ? `${Math.floor(s / 60)}分${pad(s % 60)}秒` : `${s}秒`;
+    if (left <= 0) issue(false);
+  }
+
+  /* ================= 掲示板 ================= */
+  const mkId = () => Array.from({ length: 7 }, () => R('abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789+/')).join('');
+  const IDS = Array.from({ length: 11 }, mkId);
+  let postNo = ri(200, 880);
+  const posts = [];
+  let goer = null;
+  $('boardTitle').textContent = `管区掲示板 ／ 第${ri(2, 14)}壕 雑談`;
+
+  const REPLIES = [
+    () => 'お前の区が水を止めたせいだろ',
+    () => '嘘つくな。昨日お前が缶詰抱えて裏通り歩いてるの見たぞ',
+    () => '通報した。配給券の番号も控えてある',
+    () => `${place()}の人間は黙ってろ。濾過塔を壊したのお前らだろ`,
+    () => `線量${(ri(8, 40) / 10).toFixed(1)}で騒ぐな。こっちは${ri(9, 60)}の中で瓦礫運んでる`,
+    () => '長文うざ。その電池で暖でも取ってろ',
+    () => '効いてて草。草はもう生えないけど',
+    () => '評議会の犬は巣に帰れ',
+    () => 'それ言ってたやつ、先週から書き込みないぞ',
+    () => '証拠出せ。出せないなら配給列の最後尾に並べ',
+    () => 'IDまた変わってるぞ自演野郎',
+    () => 'お前がマスク転売してるの、この壕の全員が知ってる',
+    () => '名簿見てこい。お前の名前、もう線引かれてたぞ',
+    () => 'はい論破。で、今日の水は確保できたのか？',
+    () => 'お前みたいなのが残ったのが一番の災害だわ',
+    () => `文句あるなら第${ri(3, 40)}検問所の外で言え`,
+    () => `うちは${ri(2, 6)}人で1リットルだぞ。甘えるな`,
+    () => 'その口で配給列に割り込んだくせに',
+    () => '書き込む体力あるなら瓦礫運べ',
+    () => '震えてるのは寒さか？ 図星か？',
+    () => `${fmtP(item('water').p)}券の水を買える身分のやつは言うことが違うな`,
+    () => 'お前の部屋だけ夜に明かりついてるの、みんな見てるからな'
+  ];
+  const STARTERS = [
+    () => `${place()}の連中、夜中に検問所の外で何か運んでた`,
+    () => '正直、放送局のやつらだけ飯食ってるだろ',
+    () => `乾パン1袋${fmtP(item('bread').p)}券とか誰が買えるんだよ`,
+    () => `日当${wageText()}のまま${wageDays}日。水1リットルも買えない`,
+    () => '隣の部屋、3日前から物音がしない。配給券もらっていいか？',
+    () => '電池と抗生剤、交換できるやついる？',
+    () => 'さっきの放送、声がいつもの人と違わなかったか',
+    () => '値段だけ上がって、売ってる物は減ってる。何なんだよこれ',
+    () => '誰だよ集会殻のストーブの灯油抜いたの',
+    () => `第${ri(2, 9)}区のやつら、また配給を2回もらってた`,
+    () => '昨日からずっと同じ曲が流れてないか',
+    () => '針が飛ぶたびに気が狂いそうになる。誰か蓄音機止めてこい',
+    () => `マスク${fmtP(item('mask').p)}券。朝より上がってる。夕方にはもっと上がる`,
+    () => '働いても働かなくても同じなら、もう誰も瓦礫なんか運ばない'
+  ];
+  const REACT = {
+    boom: [() => 'また爆破かよ。今月何回目だ', () => 'どうせ評議会の自演', b => `${b.where}ってどこだよ。地図にないぞ`, () => 'これ内部の人間じゃないと無理だろ。誰だよ', () => '次はうちの区だな'],
+    rad: [() => '線量計持ってるやつ数値貼れ', () => '窓ふさぐテープがもうない', () => 'マスク買い占めてたやつ出てこい', b => `${b.where}の風下ってうちじゃねえか`],
+    econ: [() => 'また上がった。朝買っとけばよかった', () => '券刷ってるやつらは困らないもんな', () => '券で尻も拭けない。紙が硬い', () => '物々交換って言うけど、交換する物がもうない'],
+    lure: [() => '灯りを持つなって何だよ', () => 'いつもの局員と声が違う', () => 'うますぎる話だろ。今どき誰がタダで配るんだ', () => '認証符号ついてないぞこれ'],
+    after: [() => 'だから言っただろ', () => '止めたやつを馬鹿にしてた連中、何か言えよ', () => '行ったやつの配給券、誰がもらうんだ', () => '罠だって書いたら袋叩きにしたよなお前ら']
+  };
+
+  function renderPost(p, fresh) {
+    const el = document.createElement('div'); el.className = 'post' + (fresh && !reduced ? ' new' : '');
+    const h = document.createElement('span'); h.className = 'ph';
+    h.textContent = `${p.no} 名無しの生存者 ${hhmm(p.at)} ID:${p.id}`;
+    el.append(h);
+    if (p.anchor) { const a = document.createElement('span'); a.className = 'anc'; a.textContent = `>>${p.anchor}`; el.append(a); }
+    el.append(p.text);
+    const box = $('posts'); box.append(el);
+    while (box.children.length > 16) box.firstChild.remove();
+  }
+  function post(text, anchor, avoidId, fresh = true) {
+    let id = R(IDS); while (id === avoidId) id = R(IDS);
+    const p = { no: ++postNo, id, text, anchor: anchor ? anchor.no : 0, at: new Date() };
+    posts.push(p); if (posts.length > 40) posts.shift();
+    renderPost(p, fresh);
+    return p;
+  }
+  function chatter(fresh = true) {
+    const recent = posts.slice(-6);
+    if (recent.length > 1 && Math.random() < 0.7) { const t = R(recent); post(R(REPLIES)(), t, t.id, fresh); }
+    else post(R(STARTERS)(), null, null, fresh);
+  }
+  function loopChatter() { chatter(); setTimeout(loopChatter, ri(3500, 11000)); }
+  const soon = (ms, fn) => setTimeout(fn, ms);
+  function reactTo(b) {
+    if (b.lure) {
+      soon(3500, () => { post(R(REACT.lure)(b)); });
+      soon(7000, () => { goer = post(R(['行ってくるわ。腹減ってるし', '家族連れて行ってみる。もう失うものもない', '俺は行く。ここで凍えるよりましだ'])); });
+      soon(10500, () => { if (goer) post(R(['罠に決まってるだろ馬鹿か', 'やめとけ。戻ってきたやつ見たことあるか？']), goer, goer.id); });
+      soon(14000, () => { const last = posts[posts.length - 1]; post(R(['お前みたいに疑うやつがいるから配給が減るんだよ', '行かないなら黙ってろ。取り分が増えて助かる']), last, last.id); });
+      return;
+    }
+    if (b.after === 'lure') {
+      soon(4000, () => { if (goer) post('行くって言ってたやつ、あれから書き込みないな', goer, goer.id); else post(R(REACT.after)()); });
+      soon(8000, () => post(R(REACT.after)()));
+      soon(12000, () => { const last = posts[posts.length - 1]; post(R(['後出しで偉そうにするな。お前も迷ってただろ', '黙れ。次に同じ放送が来たらお前が行け']), last, last.id); goer = null; });
+      return;
+    }
+    const pool = /爆/.test(b.cat) ? REACT.boom : b.cat === '放射線' ? REACT.rad : b.cat === '経済' ? REACT.econ : null;
+    if (pool) { soon(ri(3000, 6000), () => post(R(pool)(b))); if (Math.random() < 0.6) soon(ri(8000, 12000), () => post(R(pool)(b))); }
+  }
+
+  /* ================= 計器 ================= */
+  const DOSE_BASE = 1.2;
+  let dose = DOSE_BASE, doseTarget = DOSE_BASE;
+  const trace = Array.from({ length: 90 }, () => DOSE_BASE + (Math.random() - 0.5) * 0.3);
+  let temp = -9.4, windDir = 7, windSp = 6, water = 41, power = 63;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  function drawSpark() {
+    const c = $('spark'), dpr = window.devicePixelRatio || 1;
+    const w = c.clientWidth, h = c.clientHeight;
+    if (!w) return;
+    if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    const g = c.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const max = Math.max(5, Math.max(...trace) * 1.15);
+    const x = i => (i / (trace.length - 1)) * (w - 6);
+    const y = v => h - 2 - (v / max) * (h - 8);
+    g.strokeStyle = css('--line'); g.lineWidth = 1;
+    for (let k = 1; k <= 3; k++) { const yy = Math.round(h * k / 4) + .5; g.beginPath(); g.moveTo(0, yy); g.lineTo(w, yy); g.stroke(); }
+    const col = dose < 5 ? css('--teal') : dose < 20 ? css('--amber') : css('--flare');
+    g.beginPath(); g.moveTo(x(0), y(trace[0]));
+    trace.forEach((v, i) => g.lineTo(x(i), y(v)));
+    g.strokeStyle = col; g.lineWidth = 1.6; g.stroke();
+    g.lineTo(x(trace.length - 1), h); g.lineTo(0, h); g.closePath();
+    g.globalAlpha = .14; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
+    g.fillStyle = col; g.fillRect(x(trace.length - 1) - 3, y(trace[trace.length - 1]) - 3, 6, 6);
+  }
+  function instruments() {
+    doseTarget += (DOSE_BASE - doseTarget) * 0.012;
+    dose += (doseTarget - dose) * 0.15 + (Math.random() - 0.5) * 0.1 * Math.max(1, dose * 0.12);
+    dose = Math.max(0.3, dose);
+    trace.push(dose); trace.shift();
+    const el = $('dose');
+    el.textContent = dose < 10 ? dose.toFixed(2) : dose.toFixed(1);
+    const lvl = dose < 5 ? ['--teal', '屋外活動 可'] : dose < 20 ? ['--amber', '屋外 30分以内'] : ['--flare', '屋内退避'];
+    el.parentElement.parentElement.style.setProperty('--dose', `var(${lvl[0]})`);
+    $('doseState').textContent = lvl[1];
+    if (doseTarget < DOSE_BASE + 0.5 && dose < 2 && $('doseSite').textContent !== 'KB-7 屋上観測点') $('doseSite').textContent = 'KB-7 屋上観測点';
+    drawSpark();
+    temp = Math.max(-24, Math.min(-2, temp + (Math.random() - 0.5) * 0.3));
+    $('temp').textContent = temp.toFixed(1);
+    if (Math.random() < 0.05) windDir = (windDir + R([-1, 1]) + 8) % 8;
+    windSp = Math.max(1, Math.min(24, windSp + R([-1, 0, 0, 1])));
+    $('wind').textContent = `${DIR[windDir]} ${windSp}`;
+    if (Math.random() < 0.03) water = water <= 6 ? ri(35, 55) : water - 1;
+    power = Math.max(12, Math.min(88, power + R([-1, 0, 0, 1])));
+    $('water').textContent = water; $('power').textContent = power;
+    $('waterBar').style.width = water + '%'; $('waterBar').className = water < 20 ? 'low' : '';
+    $('powerBar').style.width = power + '%'; $('powerBar').className = power < 25 ? 'low' : '';
+  }
+
+  function fillTicker() {
+    const tk = $('tk'); tk.textContent = '';
+    const items = Array.from({ length: 10 }, () => R(NOTICES)());
+    [...items, ...items].forEach(t => { const s = document.createElement('span'); s.textContent = t; tk.append(s); });
+  }
+  $('tk').addEventListener('animationiteration', fillTicker);
+
+  /* ================= 音：共通の配線 ================= */
+  let ac = null, G = null;
+  const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function hz(n) {
+    const m = /^([A-G])(#|b)?(\d)$/.exec(n);
+    const s = SEMI[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (+m[3] + 1) * 12;
+    return 440 * Math.pow(2, (s - 69) / 12);
+  }
+  function noiseBuf(ctx, sec, fn) {
+    const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = fn(i, n, ctx.sampleRate);
+    return b;
+  }
+  function shaperCurve(k) {
+    const c = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); }
+    return c;
+  }
+  function crackleBuf() {
+    const rev = 1.8, turns = 4, sr = ac.sampleRate, n = Math.floor(rev * turns * sr);   // 33 1/3回転：1周1.8秒
+    const b = ac.createBuffer(1, n, sr), d = b.getChannelData(0);
+    let brown = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr, w = Math.random() * 2 - 1;
+      brown = (brown + 0.02 * w) / 1.02;                                   // モーターのゴロゴロ
+      const swish = 0.5 + 0.5 * Math.sin(2 * Math.PI * t / rev);           // 反った盤：1周ごとに「サー…サー…」と強弱がつく
+      d[i] = w * 0.035 * swish + brown * 0.7 + Math.sin(2 * Math.PI * 100 * t) * 0.006;
+    }
+    const tickAt = (at, amp, tau) => { const s = Math.floor(at * sr); for (let i = 0; i < tau * sr * 6 && s + i < n; i++) d[s + i] += (Math.random() * 2 - 1) * amp * Math.exp(-i / (tau * sr)); };
+    for (let k = 0; k < 240; k++) tickAt(Math.random() * rev * turns, 0.1 + Math.pow(Math.random(), 3) * 0.9, 0.0003 + Math.random() * 0.001);   // 細かいパチパチ
+    for (let k = 0; k < 7; k++) { const at = Math.random() * (rev * turns - 0.1); for (let j = 0; j < 14; j++) tickAt(at + Math.random() * 0.06, 0.3, 0.0005); }   // ほこりの塊
+    for (let t = 0; t < turns; t++) { tickAt(t * rev + 0.31, 1.0, 0.0016); tickAt(t * rev + 1.12, 0.6, 0.001); tickAt(t * rev + 1.47, 0.35, 0.0008); }   // 毎周同じ場所の傷
+    return b;
+  }
+  function ensureAudio() {
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return true; }
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      const g = {};
+      g.master = ac.createGain();
+      g.comp = ac.createDynamicsCompressor(); g.comp.threshold.value = -12; g.comp.ratio.value = 12; g.comp.attack.value = 0.003; g.comp.release.value = 0.25;
+      g.master.connect(g.comp); g.comp.connect(ac.destination);
+      g.conv = ac.createConvolver();
+      g.conv.buffer = noiseBuf(ac, 3.4, (i, n) => (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6));
+      g.wet = ac.createGain(); g.wet.gain.value = 0.42; g.conv.connect(g.wet); g.wet.connect(g.master);
+      /* 蓄音機：盤 → 回転むら → ラッパの帯域 → 歪み → 音量 */
+      g.recBus = ac.createGain();
+      g.wow = ac.createDelay(0.2); g.wow.delayTime.value = 0.04;
+      g.trem = ac.createGain();
+      const lfo = (f, param) => { const o = ac.createOscillator(), a = ac.createGain(); o.frequency.value = f; a.gain.value = 0; o.connect(a); a.connect(param); o.start(); return a; };
+      g.wowDepth = lfo(0.556, g.wow.delayTime); g.flutDepth = lfo(7.1, g.wow.delayTime); g.warpDepth = lfo(0.11, g.wow.delayTime);
+      g.tremDepth = lfo(0.556, g.trem.gain);            // 1周ごとに音量も揺れる
+      g.hp = ac.createBiquadFilter(); g.hp.type = 'highpass'; g.hp.frequency.value = 230;
+      g.lp = ac.createBiquadFilter(); g.lp.type = 'lowpass'; g.lp.frequency.value = 3000;
+      g.pk = ac.createBiquadFilter(); g.pk.type = 'peaking'; g.pk.frequency.value = 1100; g.pk.Q.value = 0.9; g.pk.gain.value = 6;
+      g.pk2 = ac.createBiquadFilter(); g.pk2.type = 'peaking'; g.pk2.frequency.value = 2300; g.pk2.Q.value = 1.4; g.pk2.gain.value = 4;   // ラッパの鳴り
+      g.sh = ac.createWaveShaper(); g.sh.curve = shaperCurve(2.4);
+      g.vol = ac.createGain(); g.duck = ac.createGain();
+      g.recBus.connect(g.wow); g.wow.connect(g.hp); g.hp.connect(g.lp); g.lp.connect(g.pk); g.pk.connect(g.pk2); g.pk2.connect(g.sh); g.sh.connect(g.trem); g.trem.connect(g.vol);
+      g.vol.connect(g.duck); g.duck.connect(g.master); g.duck.connect(g.conv);
+      g.crackle = ac.createGain(); g.crackle.gain.value = 0;
+      const cs = ac.createBufferSource(); cs.buffer = crackleBuf(); cs.loop = true; cs.connect(g.crackle); g.crackle.connect(g.vol); cs.start();
+      g.popBuf = noiseBuf(ac, 0.03, (i, n, sr) => (Math.random() * 2 - 1) * Math.exp(-i / (sr * 0.004)));
+      /* 警報：無線機の帯域 → 歪み → 残響 */
+      g.alertBus = ac.createGain();
+      g.bp = ac.createBiquadFilter(); g.bp.type = 'bandpass'; g.bp.frequency.value = 1500; g.bp.Q.value = 0.8;
+      g.shA = ac.createWaveShaper(); g.shA.curve = shaperCurve(4);
+      g.alertOut = ac.createGain(); g.alertOut.gain.value = 0.8;
+      g.alertBus.connect(g.bp); g.bp.connect(g.shA); g.shA.connect(g.alertOut); g.alertOut.connect(g.master); g.alertOut.connect(g.conv);
+      g.white = noiseBuf(ac, 1.5, () => Math.random() * 2 - 1);
+      G = g;
+      applyTone();
+      return true;
+    } catch (e) { ac = null; G = null; return false; }
+  }
+  function applyTone() {
+    if (!G) return;
+    const d = prefs.damage / 100, t = ac.currentTime;
+    G.wowDepth.gain.setTargetAtTime(0.002 + 0.011 * d, t, 0.2);   // 1周ごとの音程のうねり
+    G.flutDepth.gain.setTargetAtTime(0.00003 + 0.00013 * d, t, 0.2);
+    G.warpDepth.gain.setTargetAtTime(0.011 * d, t, 0.2);
+    G.lp.frequency.setTargetAtTime(4200 - 1900 * d, t, 0.2);
+    G.vol.gain.setTargetAtTime(prefs.vol / 100 * 0.9, t, 0.05);
+    G.tremDepth.gain.setTargetAtTime(0.05 + 0.2 * d, t, 0.2);
+    G.crackle.gain.cancelScheduledValues(t);
+    G.crackle.gain.setTargetAtTime(rec.playing ? 0.1 + 0.4 * d : 0, t + (rec.playing ? 0 : 1.0), 0.1);
+    rec.rate = 0.96 - 0.17 * d;                                    // 壊れているほど遅く、低く
+  }
+
+  /* ---- 警報音・呼び鈴 ---- */
+  function staticBurst(t, dur, vol) {
+    const s = ac.createBufferSource(), g = ac.createGain();
+    s.buffer = G.white; s.loop = true;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.03);
+    g.gain.setValueAtTime(vol, t + dur - 0.06); g.gain.linearRampToValueAtTime(0, t + dur);
+    s.connect(g); g.connect(G.alertBus); s.start(t); s.stop(t + dur + 0.05);
+  }
+  function boom(t) {                                    // 腹に来る衝撃：落ちていく低音＋叩きつけるノイズ
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(28, t + 1.3);
+    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    o.connect(g); g.connect(G.master); o.start(t); o.stop(t + 1.6);
+    const s = ac.createBufferSource(), ng = ac.createGain(), f = ac.createBiquadFilter();
+    s.buffer = G.white; f.type = 'lowpass'; f.frequency.setValueAtTime(7000, t); f.frequency.exponentialRampToValueAtTime(300, t + 0.35);
+    ng.gain.setValueAtTime(0.8, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    s.connect(f); f.connect(ng); ng.connect(G.master); ng.connect(G.conv); s.start(t); s.stop(t + 0.45);
+  }
+  function thud(t, vol) {                               // 扉を叩く音／針を落とす音
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.connect(g); g.connect(G.master); g.connect(G.conv); o.start(t); o.stop(t + 0.25);
+    const s = ac.createBufferSource(), ng = ac.createGain(), f = ac.createBiquadFilter();
+    s.buffer = G.white; f.type = 'lowpass'; f.frequency.value = 700;
+    ng.gain.setValueAtTime(vol * 0.5, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    s.connect(f); f.connect(ng); ng.connect(G.master); s.start(t); s.stop(t + 0.1);
+  }
+  function blast(t, dur, freqs, vol) {                  // 半音でぶつかり合う警笛。最後に音程が垂れる
+    freqs.forEach(f => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t); o.frequency.setValueAtTime(f, t + dur * 0.7); o.frequency.linearRampToValueAtTime(f * 0.88, t + dur);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.012);
+      g.gain.setValueAtTime(vol, t + dur - 0.04); g.gain.linearRampToValueAtTime(0, t + dur);
+      o.connect(g); g.connect(G.alertBus); o.start(t); o.stop(t + dur + 0.02);
+    });
+  }
+  function siren(t, dur, f1, f2, vol) {                 // 下でうなり上がるサイレン
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(f1, t);
+    o.frequency.exponentialRampToValueAtTime(f2, t + dur * 0.55); o.frequency.exponentialRampToValueAtTime(f1 * 0.8, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.2);
+    g.gain.setValueAtTime(vol, t + dur - 0.4); g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(g); g.connect(G.alertBus); g.connect(G.conv); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function duck(t, hold) {
+    G.duck.gain.cancelScheduledValues(t); G.duck.gain.setTargetAtTime(0.25, t, 0.08); G.duck.gain.setTargetAtTime(1, t + hold, 0.7);
+  }
+  function chime(sev) {
+    if (!prefs.sound || !ac) return;
+    try {
+      const t0 = ac.currentTime + 0.05;
+      if (sev === 4) {                                  // 親切そうな放送：やさしい鐘。最後の1音だけ少し低い
+        duck(t0, 4.5); staticBurst(t0, 0.4, 0.2);
+        ['E6', 'C6', 'G5', 'C6'].forEach((n, i) => {
+          const o = ac.createOscillator(), g = ac.createGain(), t = t0 + 0.5 + i * 0.42;
+          o.frequency.value = hz(n) * (i === 3 ? 0.985 : 1);
+          g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + 1.8);
+          o.connect(g); g.connect(G.master); g.connect(G.conv); o.start(t); o.stop(t + 1.9);
+        });
+        return;
+      }
+      if (sev === 3) {
+        duck(t0, 6.5); boom(t0); staticBurst(t0, 0.22, 0.6);
+        for (let i = 0; i < 4; i++) blast(t0 + 0.28 + i * 0.64, 0.5, [466, 494, 233], 0.4);
+        siren(t0 + 0.28, 2.9, 230, 720, 0.16);
+        staticBurst(t0 + 2.9, 0.6, 0.22);
+        return;
+      }
+      if (sev === 2) {
+        duck(t0, 4.5); staticBurst(t0, 0.3, 0.4); thud(t0, 0.8);
+        blast(t0 + 0.35, 0.55, [392, 415], 0.4); blast(t0 + 1.05, 0.55, [392, 415], 0.4);
+        staticBurst(t0 + 1.7, 0.3, 0.15);
+        return;
+      }
+      duck(t0, 3.5); staticBurst(t0, 0.3, 0.25);
+      const n = sev === 1 ? 3 : 2;
+      for (let i = 0; i < n; i++) {
+        const o = ac.createOscillator(), g = ac.createGain(), t = t0 + 0.4 + i * 0.3;
+        o.type = sev === 1 ? 'square' : 'sine'; o.frequency.setValueAtTime(sev === 1 ? 740 : 880, t);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.28, t + 0.02); g.gain.linearRampToValueAtTime(0, t + 0.2);
+        o.connect(g); g.connect(G.alertBus); o.start(t); o.stop(t + 0.25);
+      }
+    } catch (e) {}
+  }
+  function dingdong(t, sick) {
+    [[659.3, 0], [523.3, 0.6]].forEach(([f, dt]) => {
+      [1, 2.76].forEach((m, k) => {                     // 金属板の鐘：基音と、整数倍でない倍音
+        const o = ac.createOscillator(), g = ac.createGain(), at = t + dt;
+        o.frequency.setValueAtTime(f * m * (sick ? 0.97 : 1), at);
+        if (sick) o.frequency.exponentialRampToValueAtTime(f * m * 0.9, at + 1.6);   // 電池の切れかけた呼び鈴
+        g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(k ? 0.05 : 0.28, at + 0.008);
+        g.gain.exponentialRampToValueAtTime(0.0005, at + (k ? 0.5 : 1.7));
+        o.connect(g); g.connect(G.master); g.connect(G.conv); o.start(at); o.stop(at + 1.8);
+      });
+    });
+  }
+  function doorSound(v) {
+    if (!prefs.sound || !ac) return;
+    try {
+      const t = ac.currentTime + 0.05; duck(t, 3);
+      if (v.sound === 'knock') { for (let i = 0; i < 5; i++) thud(t + i * 0.34, 0.8); }
+      else if (v.sound === 'none') staticBurst(t, 0.5, 0.12);
+      else { dingdong(t, v.risk === 3); if (v.risk === 3 && Math.random() < 0.5) dingdong(t + 1.5, true); }
+    } catch (e) {}
+  }
+  function speak(text) {
+    if (!prefs.voice || !('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP'; u.rate = 0.92; u.pitch = 0.7;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  /* ================= 音：仮の2曲を合成して「盤」にする ================= */
+  const parse = (str, base) => str.trim().split(/\s+/).map(tok => { const [n, m] = tok.split(':'); return [n, base * (m ? +m : 1)]; });
+  function tone(ctx, dest, f, t, d, bow, vol) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = f; o.detune.value = (Math.random() - 0.5) * 18;   // わずかに調子外れ
+    if (bow) {
+      o.type = 'sawtooth';
+      const a = Math.min(0.09, d * 0.3);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + a);
+      g.gain.setValueAtTime(vol, Math.max(t + a, t + d - 0.02)); g.gain.linearRampToValueAtTime(0, t + d + 0.1);
+      if (ctx.vib) ctx.vib.connect(o.detune);
+      o.start(t); o.stop(t + d + 0.15);
+    } else {
+      o.type = 'triangle';
+      const len = Math.min(1.4, d * 1.8);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+      o.start(t); o.stop(t + len + 0.05);
+    }
+    o.connect(g); g.connect(dest);
+  }
+  function line(ctx, dest, notes, t0, unit, bow, vol) {
+    let t = t0;
+    for (const [n, d] of notes) { tone(ctx, dest, hz(n), t, d * unit, bow, vol); t += d * unit; }
+  }
+  function offline(seconds) {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    let ctx;
+    try { ctx = new OAC(1, Math.ceil(22050 * seconds), 22050); } catch (e) { ctx = new OAC(1, Math.ceil(44100 * seconds), 44100); }
+    const v = ctx.createOscillator(), vg = ctx.createGain(); v.frequency.value = 5.4; vg.gain.value = 11; v.connect(vg); v.start(); ctx.vib = vg;
+    ctx.strings = ctx.createBiquadFilter(); ctx.strings.type = 'lowpass'; ctx.strings.frequency.value = 2600; ctx.strings.connect(ctx.destination);
+    return ctx;
+  }
+  const rendered = ctx => new Promise((res, rej) => {
+    ctx.oncomplete = e => res(e.renderedBuffer);
+    const p = ctx.startRendering(); if (p && p.catch) p.catch(rej);
+  });
+
+  /* J.S.バッハ 管弦楽組曲第3番 BWV1068「エール」前半（ニ長調、16分音符単位） */
+  const AIR_MEL = parse('F#5:18 B5 G5 E5 D5 C#5 D5 C#5:4 A4:4 A5:9 F#5 C5 B4 E5 D#5 A5 G5:10 E5 B4 A4 D5 C#5 G5 F#5:5 E5 D5 E5 F#5 B5:4 A5 G#5 F#5 E5 D5:2 C#5 B4 C#5:2 E5:2 B4:3 A4 A4:4', 0.25);
+  const AIR_BASS = parse('D3 D4 C#4 C#3 B2 B3 A3 A2 G2 G3 G#3 G#2 A2 A3 G3 G2 F#2 F#3 E3 E2 D#2 D#3 B2 B3 E2 E3 D3 D2 C#2 C#3 A2 A3 D3 D4 C#4 C#3 B2 B3 E3 E2 A2 A3 F#3 F#2 E2 E3 A2 A2', 0.5);
+  function renderAir() {
+    const beat = 1.38, ctx = offline(48 * beat + 3);
+    for (let r = 0; r < 2; r++) {
+      line(ctx, ctx.strings, AIR_MEL, 0.2 + r * 24 * beat, beat, true, 0.2);
+      line(ctx, ctx.destination, AIR_BASS, 0.2 + r * 24 * beat, beat, false, 0.3);
+    }
+    return rendered(ctx);
+  }
+  /* J.パッヘルベル カノン ニ長調：低音8音の上で、3声が1周ずつ遅れて同じ旋律を追う */
+  const CANON_BASS = parse('D3 A2 B2 F#2 G2 D2 G2 A2', 1);
+  const CANON = [
+    parse('F#5 E5 D5 C#5 B4 A4 B4 C#5', 1),
+    parse('D5 C#5 B4 A4 G4 F#4 G4 E4', 1),
+    parse('D4 F#4 A4 G4 F#4 D4 F#4 E4 D4 B3 D4 A4 G4 B4 A4 G4', 0.5),
+    parse('F#4 D4 E4 C#5 D5 F#5 A5 A4 B4 G4 A4 F#4 D4 D5 D5 C#5', 0.5),
+    parse('D5 C#5 D5 D4 C#4 A4 E4 F#4 D4 D5 C#5 B4 C#5 F#5 A5 B5 G5 F#5 E5 G5 F#5 E5 D5 C#5 B4 A4 G4 F#4 E4 G4 F#4 E4', 0.25),
+    parse('D4 E4 F#4 G4 A4 E4 A4 G4 F#4 B4 A4 G4 A4 G4 F#4 E4 D4 B3 B4 C#5 D5 C#5 B4 A4 G4 F#4 E4 B4 A4 B4 A4 G4', 0.25),
+    parse('A5:2 F#5 G5 A5:2 F#5 G5 A5 A4 B4 C#5 D5 E5 F#5 G5 F#5:2 D5 E5 F#5:2 F#4 G4 A4 B4 A4 G4 A4 F#4 G4 A4 G4:2 B4 A4 G4:2 F#4 E4 F#4 E4 D4 E4 F#4 G4 A4 B4 G4:2 B4 A4 B4:2 C#5 D5 A4 B4 C#5 D5 E5 F#5 G5 A5', 0.125)
+  ];
+  function renderCanon() {
+    const u = 1.2, seq = [0, 1, 2, 3, 4, 5, 6, 0, 1], cycles = seq.length + 3;
+    const ctx = offline(cycles * 8 * u + 4 * u + 3), vols = [0.15, 0.12, 0.1];
+    for (let c = 0; c < cycles; c++) {
+      const t = 0.2 + c * 8 * u;
+      line(ctx, ctx.destination, CANON_BASS, t, u, false, 0.3);
+      for (let v = 0; v < 3; v++) { const i = c - 1 - v; if (i >= 0 && i < seq.length) line(ctx, ctx.strings, CANON[seq[i]], t, u, true, vols[v]); }
+    }
+    const end = 0.2 + cycles * 8 * u;
+    ['D4', 'F#4', 'A4', 'D5'].forEach(n => tone(ctx, ctx.strings, hz(n), end, 4 * u, true, 0.1));
+    tone(ctx, ctx.destination, hz('D2'), end, 4 * u, false, 0.3);
+    return rendered(ctx);
+  }
+
+  /* ================= 音：壊れた盤の再生 ================= */
+  const buffers = {};
+  const NAMES = { air: 'G線上のアリア', canon: 'パッヘルベルのカノン', file: '自分の曲' };
+  const rec = { playing: false, key: 'air', pos: 0, endAt: 0, timer: 0, rate: 0.86, skips: 0, srcs: new Set(), busy: false };
+  const gramState = t => { $('gram').textContent = t; };
+  const REV = 1.8;                                        // 33 1/3回転：針が1周するのに1.8秒
+  function track(s, t0) { s._t0 = t0; rec.srcs.add(s); s.onended = () => rec.srcs.delete(s); }
+  function seg(off, len, t) {
+    const s = ac.createBufferSource(); s.buffer = buffers[rec.key]; s.playbackRate.value = rec.rate;
+    s.connect(G.recBus); s.start(t, off, len); track(s, t);
+  }
+  function ramp(off, t, steps) {                          // 回転数が変わる区間。steps = [[秒, 倍率], …]
+    const s = ac.createBufferSource(), r = rec.rate, pr = s.playbackRate;
+    s.buffer = buffers[rec.key];
+    let at = t, prev = steps[0][1], used = 0;
+    pr.setValueAtTime(r * prev, t);
+    for (const [sec, mul] of steps.slice(1)) { at += sec; pr.linearRampToValueAtTime(r * mul, at); used += (prev + mul) / 2 * sec * r; prev = mul; }
+    s.connect(G.recBus); s.start(t, off); s.stop(at); track(s, t);
+    return [used, at - t];
+  }
+  function pop(t) {
+    const s = ac.createBufferSource(), g = ac.createGain();
+    s.buffer = G.popBuf; g.gain.value = 0.35 + 0.5 * prefs.damage / 100;
+    s.connect(g); g.connect(G.vol); s.start(t);
+  }
+  function scheduleEvent() {
+    const buf = buffers[rec.key], dur = buf.duration, d = prefs.damage / 100, r = rec.rate, groove = REV * r;
+    if (rec.spin) {                                       // 針を落とす → 導入溝のノイズ → 回転が上がりながら曲が始まる
+      rec.spin = false;
+      thud(rec.endAt, 0.5); pop(rec.endAt + 0.02); rec.endAt += 1.5;
+      const [used, took] = ramp(rec.pos, rec.endAt, [[0, 0.3], [1.5, 1]]);
+      rec.pos += used; rec.endAt += took; return;
+    }
+    if (rec.pos >= dur - 0.3) {                           // 盤の終わり：最内周の溝を3周してから頭へ
+      for (let k = 0; k < 3; k++) pop(rec.endAt + k * REV + 0.3);
+      rec.pos = 0; rec.endAt += 3 * REV;
+      if (prefs.piece === 'both') rec.key = rec.key === 'air' ? 'canon' : 'air';
+      return;
+    }
+    let L = d < 0.05 ? dur - rec.pos : (3 + Math.random() * 11) * (1.25 - d);
+    L = Math.min(L, dur - rec.pos);
+    seg(rec.pos, L, rec.endAt); rec.endAt += L / r; rec.pos += L;
+    if (d < 0.05 || rec.pos >= dur - 0.3) return;
+    rec.skips++;
+    const x = rec.forceDroop ? 0.95 : Math.random(); rec.forceDroop = false;
+    if (x < 0.55) {                                       // 同じ溝を、ちょうど1周ぶんずつ繰り返す
+      const g = Math.min(rec.pos, groove), n = 3 + Math.floor(Math.random() * (2 + 7 * d));
+      for (let i = 0; i < n; i++) { pop(rec.endAt); seg(rec.pos - g, g, rec.endAt); rec.endAt += g / r; }
+      pop(rec.endAt);
+    } else if (x < 0.72) { pop(rec.endAt); rec.pos = Math.min(dur - 0.4, rec.pos + groove * ri(1, 3)); }   // 隣の溝へ飛ぶ
+    else if (x < 0.82) { pop(rec.endAt); rec.pos = Math.max(0, rec.pos - groove * ri(2, 3)); }             // 手前の溝へ戻る
+    else {                                                // 回転が落ちて、また持ち直す
+      const [used, took] = ramp(rec.pos, rec.endAt, [[0, 1], [2.4, 0.25], [0.6, 0.25], [1.6, 1]]);
+      rec.pos += used; rec.endAt += took;
+    }
+  }
+  function pump() {
+    if (!rec.playing) return;
+    if (rec.endAt < ac.currentTime) rec.endAt = ac.currentTime + 0.1;
+    let guard = 0;
+    while (rec.endAt < ac.currentTime + 1.2 && guard++ < 40) scheduleEvent();
+    gramState(`再生中：${NAMES[rec.key]}　針飛び ${rec.skips}回`);
+    rec.timer = setTimeout(pump, 400);
+  }
+  function stopRec() {
+    rec.playing = false; clearTimeout(rec.timer);
+    const now = ac.currentTime;
+    rec.srcs.forEach(s => {
+      try {
+        if (s._t0 > now) s.stop();
+        else {                                            // 回転が落ちながら止まる
+          const pr = s.playbackRate; pr.cancelScheduledValues(now);
+          pr.setValueAtTime(Math.max(0.05, pr.value), now); pr.linearRampToValueAtTime(0.03, now + 1.1); s.stop(now + 1.15);
+        }
+      } catch (e) {}
+    });
+    rec.srcs.clear();
+    applyTone(); $('gramBtn').textContent = '再生'; $('gramBox').classList.remove('on'); gramState('停止中');
+  }
+  async function startRec() {
+    if (rec.busy) return;
+    if (!ensureAudio()) { gramState('この端末では音を出せません'); return; }
+    rec.busy = true; gramState('盤を準備中…');
+    try {
+      const want = prefs.piece === 'file' && !buffers.file ? 'both' : prefs.piece;
+      const keys = want === 'both' ? ['air', 'canon'] : [want];
+      for (const k of keys) if (!buffers[k]) buffers[k] = await (k === 'air' ? renderAir() : renderCanon());
+      rec.key = keys[0]; rec.pos = 0; rec.playing = true; rec.spin = true;
+      rec.endAt = ac.currentTime + 0.25;
+      applyTone(); $('gramBtn').textContent = '停止'; $('gramBox').classList.add('on'); pump();
+    } catch (e) { gramState('盤を読めませんでした'); }
+    rec.busy = false;
+  }
+  $('gramBtn').addEventListener('click', () => { rec.playing ? stopRec() : startRec(); });
+
+  /* ================= インターホン ================= */
+  const VISITORS = [
+    () => ({ who: '自称 配給公社', said: '券の確認に参りました。開けてください', seen: `腕章が手描きです。同行者${ri(2, 4)}名がカメラの死角に立っています。`, fig: 'one', risk: 3 }),
+    () => ({ who: '自称 家族', said: 'お母さんだよ。寒いの。開けて', seen: '登録上の該当者は4年前に死亡届が出ています。声は同じ抑揚で繰り返されています。', fig: 'one', risk: 3 }),
+    () => ({ who: '不明', said: '（無言）', seen: `防護服姿。面体の内側が曇っていません。${ri(20, 90)}分間、姿勢が変わっていません。`, fig: 'suit', risk: 3, sound: 'none' }),
+    () => ({ who: '自称 隣人', said: '隣の者です。水を少し分けてもらえませんか', seen: '隣室は3か月前から空室です。両手を背中に回しています。', fig: 'one', risk: 3 }),
+    () => ({ who: '徴用係', said: 'この住戸から1名、作業に出てもらいます', seen: `命令書を掲げています。廊下の奥に、すでに${ri(4, 9)}名が縄でつながれています。`, fig: 'group', risk: 2 }),
+    () => ({ who: '自称 線量検査', said: '線量検査です。全員、外に出てください', seen: '測定器を持っていません。持っているのは麻袋です。', fig: 'group', risk: 3 }),
+    () => ({ who: '取り立て', said: '貸した電池、今日こそ返してもらう', seen: `鉄パイプで扉を叩いています。利子が付いて${ri(3, 9)}本が${ri(40, 90)}本になったと言っています。`, fig: 'one', risk: 2, sound: 'knock' }),
+    () => ({ who: '不明', said: '（呼吸音のみ）', seen: 'レンズに顔を押し当てています。こちらが映像を見ていることに気づいています。', fig: 'close', risk: 3 }),
+    () => ({ who: '不明', said: 'おうちがわからないの。いれて', seen: '背丈は子どもですが、声は成人男性のものです。影が2つあります。', fig: 'small', risk: 3 }),
+    () => ({ who: '評議会 監査部', said: '名簿と人数が合いませんね。中を見せてください', seen: 'あなたの配給記録の写しを持っています。申告していない同居人の件だと言っています。', fig: 'one', risk: 2 }),
+    () => ({ who: '不明 多数', said: '（無言）', seen: `${ri(9, 17)}名が一列に並んでいます。全員、靴を履いていません。`, fig: 'group', risk: 3, sound: 'none' }),
+    () => ({ who: '自称 点検員', said: '扉の点検です。内側から鍵を外してください', seen: 'この棟に、内側から鍵を外す点検はありません。工具袋が動いています。', fig: 'one', risk: 3 }),
+    () => ({ who: '照合不能', said: '鍵をなくした。俺だよ。開けてくれ', seen: '顔の照合結果は、この住戸の住人、つまりあなたと一致しました。', fig: 'one', risk: 3 }),
+    () => ({ who: '自警連絡会', said: '匿ってるだろ。出せ。扉を壊すぞ', seen: `${ri(4, 8)}名。酒の瓶と斧を持っています。昨夜、隣の棟で同じことがありました。`, fig: 'group', risk: 2, sound: 'knock' }),
+    () => ({ who: '勧誘', said: '灰のあとに来るものについて、お話を', seen: '差し出している冊子は全ページ白紙です。片手の指が6本あります。', fig: 'one', risk: 3 }),
+    () => ({ who: '自称 医師', said: '往診です。熱があると聞きました', seen: '往診の依頼記録はありません。鞄の底から液体が垂れています。', fig: 'one', risk: 3 }),
+    () => ({ who: '物売り', said: '水、安くしとくよ。今だけだ', seen: '容器の中で何かが動いています。値段を聞くと、券ではなく髪を求めました。', fig: 'one', risk: 2 }),
+    () => ({ who: '不明', said: '開けなくていい。今夜は屋上に出るな', seen: 'それだけ言って立っています。屋上に何があるのかは答えません。', fig: 'one', risk: 2 }),
+    () => ({ who: '配達', said: 'お届け物です。受け取りの印を', seen: '宛名はあなたです。差出人もあなたです。箱の底が濡れています。', fig: 'one', risk: 3 }),
+    () => ({ who: '検知なし', said: '（呼び鈴のみ）', seen: '扉の前には誰も映っていません。床に濡れた足跡が、こちら向きに残っています。', fig: 'none', risk: 3 }),
+    () => ({ who: '自称 検問所', said: 'あなたの通行証が、壁の外で見つかりました', seen: '通行証を見せています。写真はあなたですが、発行日は来月です。', fig: 'one', risk: 3 }),
+    () => ({ who: '近隣住民', said: 'お前の部屋だけ明かりがついてるって書かれてたぞ', seen: `同じ階の${ri(5, 12)}名です。掲示板を見て来たと言っています。何人かは空の袋を持っています。`, fig: 'group', risk: 2, sound: 'knock' }),
+    () => ({ who: '不明', said: '（低い声。聞き取れません）', seen: '背が高く、頭が画角に入りません。両手を天井についています。', fig: 'tall', risk: 3 }),
+    () => ({ who: '自称 同じ階の者', said: '廊下に誰かいる。頼む、入れてくれ', seen: '廊下のカメラに映っているのは、この人物ひとりだけです。', fig: 'one', risk: 3, sound: 'knock' }),
+    () => ({ who: '闇市', said: `ツケは${fmtP(item('can').p * ri(8, 30))}券に上がった。朝より上がってる`, seen: '払えないなら代わりの物をもらうと言って、室内を覗こうとしています。', fig: 'one', risk: 2 }),
+    () => ({ who: '不明', said: '（扉を叩く音のみ）', seen: `呼び鈴を使わず、${ri(3, 9)}秒おきに扉を叩いています。始まってから${ri(2, 11)}時間が経ちました。`, fig: 'one', risk: 3, sound: 'knock' }),
+    () => ({ who: '自称 放送局', said: '受信機を回収します。それを見てはいけません', seen: '当局はそのような回収を行っていません。この画面を指さしています。', fig: 'one', risk: 3 }),
+    () => ({ who: '元住人', said: 'ここは俺の部屋だ。荷物を返せ', seen: '退去記録のある前の入居者です。退去理由の欄は「回収」となっています。', fig: 'one', risk: 2, sound: 'knock' }),
+    () => ({ who: '評議会 清掃班', said: 'この階は本日『清掃』の対象です', seen: '清掃用具は持っていません。上の階は昨日「清掃」され、今は誰もいません。', fig: 'suit', risk: 3 }),
+    () => ({ who: '配給列の顔見知り', said: '昨日、列に割り込んだよな。みんな覚えてるぞ', seen: `${ri(3, 6)}名。あなたの部屋番号を書いた紙を持っています。`, fig: 'group', risk: 2, sound: 'knock' })
+  ];
+  const PICKUP = () => ({ who: 'お迎え', said: '先ほどの放送を聞かれた方ですね。お迎えに上がりました', seen: '全員が同じ笑顔です。車のエンジンはかけたままです。荷台に靴が積んであります。', fig: 'group', risk: 3 });
+
+  const doorEl = $('door'), cam = $('cam'), cx = cam.getContext('2d'), CW = cam.width, CH = cam.height;
+  const door = { v: null, t0: 0, count: ri(2, 9), deck: [], stat: 0, jumpAt: 0, seed: 0, n: 4, ghost: 0, timer: 0 };
+  $('doorCam').textContent = `CAM-${pad(ri(1, 9))} 第${ri(2, 40)}扉`;
+  function doorIdle(note) {
+    doorEl.dataset.state = 'idle';
+    $('doorState').textContent = '来訪者なし'; $('doorWho').textContent = '';
+    $('doorSaid').textContent = ''; $('doorSeen').textContent = note || '扉の前に動くものはありません。';
+    $('doorFoot').textContent = `本日の来訪 ${door.count}件 ／ 応答 0件 ／ 施錠中`;
+  }
+  function doorLeave() {
+    const v = door.v; if (!v) return;
+    const out = R([
+      '立ち去りました。',
+      'カメラの前から消えました。立ち去ったかどうかは確認できていません。',
+      '映像が途絶えました。扉の前の状況は分かりません。',
+      '立ち去りました。扉の取っ手に、外側から何かが結ばれています。',
+      '姿は見えなくなりました。扉の下のすき間に影が残っています。'
+    ]);
+    if (out.startsWith('映像')) door.stat = 45;
+    door.v = null;
+    doorIdle(`${hhmm(new Date())} ${v.who}：${out}`);
+    clearTimeout(door.timer); door.timer = setTimeout(doorRing, ri(45000, 140000));
+  }
+  function doorRing() {
+    clearTimeout(door.timer);
+    let v;
+    if (lureHot && Date.now() - lureHot < 300000) { v = PICKUP(); lureHot = 0; }      // 偽の放送のあとには、迎えが来る
+    else {
+      if (!door.deck.length) door.deck = VISITORS.map((_, i) => i).sort(() => Math.random() - 0.5);
+      v = VISITORS[door.deck.pop()]();
+    }
+    door.v = v; door.t0 = Date.now(); door.count++; door.seed = Math.random(); door.jumpAt = ri(7, 16); door.n = ri(3, 6);
+    doorEl.dataset.state = v.risk === 3 ? 'red' : 'amber';
+    $('doorState').textContent = v.risk === 3 ? '応答禁止' : '応答非推奨';
+    $('doorWho').textContent = v.who;
+    $('doorSaid').textContent = v.said.startsWith('（') ? v.said : `「${v.said}」`;
+    $('doorSeen').textContent = v.seen;
+    doorSound(v);
+    if (v.sound === 'knock') { const again = () => { if (door.v !== v) return; doorSound(v); setTimeout(again, ri(6000, 11000)); }; setTimeout(again, 7000); }
+    if (fxOn()) {                                         // 来訪者が出た瞬間、ほかの表示が沈む
+      app.classList.add('doorfocus'); setTimeout(() => app.classList.remove('doorfocus'), 4200);
+      if (v.risk === 3) shake(1, 500);
+    }
+    if (Math.random() < 0.4) soon(5000, () => {
+      const p = post(R(['今、うちの扉の前に誰かいる', 'インターホンが鳴ってる。出たほうがいいのか？', '廊下に誰か立ってる。うちの前だ']));
+      soon(4000, () => post(R(['絶対に開けるな', '開けてやれよ。どうせ盗られる物もないだろ', '映像を見続けるな。向こうも見てるぞ', 'それ、先週うちにも来た。隣はそれで空いた']), p, p.id));
+    });
+    door.timer = setTimeout(doorLeave, ri(24000, 40000));
+  }
+  function fig(x, base, h, o) {                           // 逆光の人影：頭と、裾まで続く胴
+    const hw = h * 0.11 * (o.big ? 1.35 : 1), top = base - h;
+    cx.fillStyle = '#040605';
+    cx.beginPath(); cx.ellipse(x, top + hw, hw * 0.85, hw, 0, 0, 7); cx.fill();
+    cx.beginPath(); cx.moveTo(x - hw * 2.3, base); cx.lineTo(x - hw * 2, top + hw * 2.9);
+    cx.quadraticCurveTo(x, top + hw * 1.5, x + hw * 2, top + hw * 2.9); cx.lineTo(x + hw * 2.3, base); cx.fill();
+    if (o.visor) { cx.fillStyle = '#5d6a63'; cx.fillRect(x - hw * 0.6, top + hw * 0.65, hw * 1.2, hw * 0.55); }
+    if (o.eyes) { cx.fillStyle = '#e8f0e4'; const s = Math.max(1, hw * 0.16); cx.fillRect(x - hw * 0.42, top + hw * 0.85, s, s); cx.fillRect(x + hw * 0.26, top + hw * 0.85, s, s); }
+  }
+  function face(dx) {                                     // レンズのすぐ前の顔。暗視カメラに目だけが光る
+    cx.fillStyle = '#040605'; cx.beginPath(); cx.ellipse(88 + dx, 58, 62, 70, 0, 0, 7); cx.fill();
+    cx.fillStyle = '#e8f0e4'; cx.fillRect(66 + dx, 44, 4, 3); cx.fillRect(104 + dx, 44, 4, 3);
+  }
+  function drawCam() {
+    const now = Date.now(), v = door.v;
+    let jump = false;
+    if (door.stat > 0) { door.stat--; cx.fillStyle = '#39413d'; cx.fillRect(0, 0, CW, CH); }
+    else {
+      cx.fillStyle = '#19201d'; cx.fillRect(0, 0, CW, CH);
+      cx.fillStyle = '#28302c'; cx.beginPath(); cx.moveTo(0, CH); cx.lineTo(58, 64); cx.lineTo(118, 64); cx.lineTo(CW, CH); cx.fill();   // 床
+      cx.fillStyle = '#3a4640'; cx.fillRect(58, 20, 60, 44);                                                                        // 突き当たりの壁
+      cx.fillStyle = '#1e2522'; cx.fillRect(80, 34, 16, 30);                                                                        // 奥の扉
+      cx.strokeStyle = '#4d5a53'; cx.lineWidth = 1; cx.beginPath();
+      cx.moveTo(0, 0); cx.lineTo(58, 20); cx.moveTo(CW, 0); cx.lineTo(118, 20); cx.moveTo(0, CH); cx.lineTo(58, 64); cx.moveTo(CW, CH); cx.lineTo(118, 64); cx.stroke();
+      if (v) {
+        const el = (now - door.t0) / 1000, sway = Math.sin(el * 0.8 + door.seed * 6) * 1.5, near = Math.min(1, el / 30);
+        const eyes = v.risk === 3 && door.seed > 0.4;
+        jump = fxOn() && v.fig !== 'none' && el > door.jumpAt && el < door.jumpAt + 0.35;     // 一瞬だけ、すぐ目の前に来ている
+        if (v.fig === 'group') {
+          for (let i = 0; i < door.n; i++) { const k = (i * 0.618 + door.seed) % 1; fig(20 + k * 136, 72 + (i % 3) * 13 + near * 8, 30 + ((i * 5) % 4) * 9, { eyes: eyes && i % 2 === 0 }); }
+          fig(88 + sway, CH + 26, 90 + near * 14, { eyes });
+        } else if (v.fig === 'tall') {
+          fig(88 + sway, CH + 30, 215, {});
+          cx.strokeStyle = '#040605'; cx.lineWidth = 6; cx.beginPath(); cx.moveTo(62, 26); cx.lineTo(26, 0); cx.moveTo(114, 26); cx.lineTo(152, 0); cx.stroke();
+        } else if (v.fig === 'close') face(sway);
+        else if (v.fig === 'small') {
+          cx.fillStyle = 'rgba(0,0,0,.55)'; cx.beginPath(); cx.ellipse(66, 100, 28, 5, -0.3, 0, 7); cx.fill(); cx.beginPath(); cx.ellipse(114, 101, 32, 5, 0.25, 0, 7); cx.fill();
+          fig(88 + sway, 100, 40, { eyes });
+        } else if (v.fig === 'none') {
+          cx.fillStyle = 'rgba(0,0,0,.6)';
+          for (let i = 0; i < 7; i++) { cx.beginPath(); cx.ellipse(88 + (i % 2 ? 1 : -1) * (5 + i * 1.6), 67 + i * i * 0.85, 1.5 + i * 0.7, 1 + i * 0.4, 0, 0, 7); cx.fill(); }
+        } else fig(88 + sway, CH + 26, 92 + near * 16, { eyes, visor: v.fig === 'suit', big: v.fig === 'suit' });
+        if (jump) face(0);
+      } else if (door.ghost > 0) { door.ghost--; fig(88, 64, 22, {}); }                       // 来訪者なしのはずの廊下の奥に、数コマだけ
+      else if (Math.random() < 0.0015) door.ghost = 7;
+    }
+    const im = cx.getImageData(0, 0, CW, CH), p = im.data, amp = door.stat > 0 ? 190 : 44;
+    for (let i = 0; i < p.length; i += 4) {
+      const row = (i / 4 / CW) | 0, val = (p[i] + (Math.random() - 0.5) * amp) * (row % 2 ? 0.86 : 1);
+      p[i] = val * 0.9; p[i + 1] = val; p[i + 2] = val * 0.88;
+    }
+    cx.putImageData(im, 0, 0);
+    if (jump || Math.random() < 0.07) { const y = ri(0, CH - 14); cx.drawImage(cam, 0, y, CW, 12, ri(-14, 14), y, CW, 12); }   // 映像の横ずれ
+  }
+
+  /* ================= 画面を消灯させない ================= */
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', keepAwake);
+  document.addEventListener('pointerdown', keepAwake, { once: true });
+
+  /* ================= 設定 ================= */
+  const panel = $('settings'), opener = $('openSettings');
+  const toggle = show => { panel.hidden = !show; opener.setAttribute('aria-expanded', String(show)); };
+  opener.addEventListener('click', () => toggle(panel.hidden));
+  $('closeSettings').addEventListener('click', () => toggle(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
+
+  const sel = $('interval');
+  if (![...sel.options].some(o => +o.value === +prefs.interval)) prefs.interval = 30;
+  sel.value = String(prefs.interval);
+  sel.addEventListener('change', () => { prefs.interval = +sel.value; nextAt = Date.now() + prefs.interval * 1000; save(); });
+
+  $('optSound').checked = false; prefs.sound = false;   /* 音は操作してからでないと鳴らせない */
+  $('optSound').addEventListener('change', e => {
+    prefs.sound = e.target.checked;
+    if (prefs.sound && ensureAudio()) chime(1);
+  });
+  if (!('speechSynthesis' in window)) $('voiceRow').hidden = true;
+  $('optVoice').checked = false; prefs.voice = false;
+  $('optVoice').addEventListener('change', e => {
+    prefs.voice = e.target.checked;
+    if (prefs.voice && current) speak(current.head); else { try { speechSynthesis.cancel(); } catch (err) {} }
+  });
+
+  const pieceSel = $('piece');
+  pieceSel.value = prefs.piece;
+  pieceSel.addEventListener('change', () => {
+    prefs.piece = pieceSel.value; save();
+    if (rec.playing) { stopRec(); startRec(); }
+  });
+  $('songFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (!ensureAudio()) { gramState('この端末では音を出せません'); return; }
+    gramState('曲を読み込み中…');
+    const fr = new FileReader();
+    fr.onerror = () => gramState('ファイルを読めませんでした');
+    fr.onload = () => {
+      new Promise((res, rej) => { const p = ac.decodeAudioData(fr.result, res, rej); if (p && p.catch) p.catch(rej); })
+        .then(buf => {
+          buffers.file = buf; NAMES.file = f.name.replace(/\.[^.]+$/, '');
+          const o = pieceSel.querySelector('option[value="file"]'); o.disabled = false; o.textContent = `自分の曲：${NAMES.file}`;
+          pieceSel.value = 'file'; prefs.piece = 'file';
+          if (rec.playing) stopRec();
+          startRec();
+        })
+        .catch(() => gramState('この形式の音声は読めませんでした'));
+    };
+    fr.readAsArrayBuffer(f);
+  });
+  $('optDamage').value = prefs.damage;
+  $('optDamage').addEventListener('input', e => { prefs.damage = +e.target.value; applyTone(); save(); });
+  $('optVol').value = prefs.vol;
+  $('optVol').addEventListener('input', e => { prefs.vol = +e.target.value; applyTone(); save(); });
+
+  $('optScan').checked = !!prefs.scan;
+  app.classList.toggle('scan', !!prefs.scan);
+  $('optScan').addEventListener('change', e => { prefs.scan = e.target.checked; app.classList.toggle('scan', prefs.scan); save(); });
+  $('nowBtn').addEventListener('click', () => issue(false));
+  $('optFx').checked = !!prefs.fx;
+  $('optFx').addEventListener('change', e => { prefs.fx = e.target.checked; save(); });
+  $('doorBtn').addEventListener('click', () => { if (door.v) doorLeave(); doorRing(); toggle(false); });
+  $('fsBtn').addEventListener('click', () => {
+    try {
+      const p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) {}
+    toggle(false);
+  });
+
+  /* ================= 起動 ================= */
+  renderPrices();
+  for (let i = 0; i < 9; i++) chatter(false);
+  issue(true);
+  fillTicker(); instruments(); tick(); keepAwake();
+  setInterval(tick, 250);
+  setInterval(instruments, 1000);
+  setInterval(priceTick, 5000);
+  setTimeout(loopChatter, 4000);
+  doorIdle(); drawCam();
+  setInterval(drawCam, 110);
+  door.timer = setTimeout(doorRing, ri(18000, 30000));
+  setTimeout(sag, ri(40000, 90000));
+  addEventListener('resize', drawSpark);
+})();
+</script>
+</body>
+</html>
