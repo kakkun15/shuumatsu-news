@@ -1,0 +1,23 @@
+{
+ "name": "第七管区 緊急放送網",
+ "short_name": "緊急放送網",
+ "description": "架空の終末世界のニュースを流し続けるページ（フィクション）",
+ "start_url": ".",
+ "scope": ".",
+ "display": "fullscreen",
+ "orientation": "any",
+ "background_color": "#0a1112",
+ "theme_color": "#0a1112",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}
