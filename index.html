@@ -478,6 +478,83 @@ button, select, input { font: inherit; color: inherit; }
   .app.carousel .reading .val { font-size: 1.1rem; }
   .app.carousel .dose-num { font-size: 2.2rem; }
 }
+/* ---------- 両端のフレーム：iPhoneの切り欠き（ダイナミックアイランド）や角の丸みに文字が隠れないよう、左右に枠を立てる ---------- */
+:root { --fw: 0px; }
+html.framed { --fw: max(14px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); }
+@media (orientation: portrait) and (max-width: 600px) { html.framed { --fw: max(7px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); } html.framed .frame b { display: none; } }
+html.framed .app { padding-inline: calc(var(--fw) + 12px); }
+.frame { display: none; }
+html.framed .frame {
+  display: block; position: fixed; top: 0; bottom: 0; width: var(--fw); z-index: 9; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, #050909 0 22px, #071010 22px 23px), #050909;
+}
+html.framed .frame.l { left: 0; border-right: 1px solid var(--line); box-shadow: inset -6px 0 10px -6px #000, 3px 0 10px rgba(0, 0, 0, .55); }
+html.framed .frame.r { right: 0; border-left: 1px solid var(--line); box-shadow: inset 6px 0 10px -6px #000, -3px 0 10px rgba(0, 0, 0, .55); }
+.frame i { position: absolute; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #1b2829; box-shadow: inset 0 1px 0 #2c3f40; }
+.frame i:nth-child(1) { top: 14px; }
+.frame i:nth-child(2) { bottom: 14px; }
+.frame b {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); white-space: nowrap;
+  font: 400 .62rem var(--f-data); letter-spacing: .3em; color: #2b3e3f;
+}
+.frame.r b { transform: translate(-50%, -50%) rotate(90deg); }
+/* 設定と操作バーは、枠の有無に関係なく切り欠きを避ける */
+.settings { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+.ctl { padding-inline: max(12px, env(safe-area-inset-left, 0px)) max(12px, env(safe-area-inset-right, 0px)); }
+
+/* ---------- 初回の案内 ---------- */
+.intro {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px max(20px, env(safe-area-inset-left, 0px));
+  background: rgba(3, 7, 7, .88);
+}
+.intro-card {
+  width: min(560px, 100%); max-height: 100%; overflow-y: auto; background: var(--panel); border: 1px solid var(--amber);
+  padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 12px;
+}
+.intro h2 { margin: 0; font: 400 1.15rem var(--f-display); letter-spacing: .12em; color: var(--amber); }
+.intro ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; font-size: .95rem; line-height: 1.65; }
+.intro li b { color: var(--amber); font-weight: 700; }
+.intro .solid { align-self: flex-end; min-width: 9em; }
+@media (max-height: 520px) { .intro-card { padding: 14px 18px 12px; gap: 8px; } .intro ul { font-size: .86rem; gap: 4px; } }
+
+/* ---------- 1枚ずつモードを大きな画面で使うとき：文字と枠を画面に合わせて大きくする ---------- */
+html.big { font-size: clamp(16px, 1.25vw, 26px); }
+html.big .app.carousel .head { font-size: clamp(1.6rem, 3.3vw, 4rem); }
+html.big .app.carousel .body { font-size: 1.3rem; line-height: 1.85; max-height: none; }
+html.big .app.carousel .meta { font-size: 1rem; }
+html.big .app.carousel .origin { font-size: .95rem; }
+html.big .app.carousel .next { display: flex; }
+html.big .app.carousel .bulletin { justify-content: center; padding-right: 8px; }
+html.big .app.carousel .pane { padding: 18px 0 8px 24px; }
+html.big .app.carousel .label { font-size: .85rem; }
+/* カメラは横幅いっぱい。ただし画面の高さに収まる大きさまで */
+html.big .app.carousel .door-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+html.big .app.carousel .door .cam { width: min(100%, calc((100vh - 21rem) * 1.6)); }
+html.big .app.carousel .out .cam { max-width: none; width: min(100%, calc((100vh - 17rem) * 1.78)); }
+html.big .app.carousel .door-said { font-size: 1.3rem; }
+html.big .app.carousel .door-seen { font-size: 1rem; }
+html.big .app.carousel .door-foot, html.big .app.carousel .out-read { font-size: .85rem; }
+html.big .app.carousel .out-cap { font-size: 1.2rem; }
+html.big .app.carousel .board h2 { font-size: .9rem; }
+html.big .app.carousel .post { font-size: 1.05rem; }
+html.big .app.carousel .post .ph { font-size: .78rem; }
+html.big .app.carousel .meters.pane.on { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 32px; align-content: center; }
+html.big .app.carousel .meters .readings { grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 20px; }
+html.big .app.carousel #spark { display: block; height: 60px; }
+html.big .app.carousel #doseSite { display: inline; }
+html.big .app.carousel .dose-num { font-size: 4.6rem; }
+html.big .app.carousel .reading .val { font-size: 1.9rem; }
+html.big .app.carousel .gram span { font-size: 1rem; }
+html.big .app.carousel .disc { width: 60px; height: 60px; }
+html.big .app.carousel .chalk.pane.on { display: flex; flex-direction: column; justify-content: center; }
+html.big .app.carousel .rows li { font-size: 1.15rem; }
+html.big .app.carousel .chalk-top { font-size: 1rem; }
+html.big .app.carousel .chalk-top b { font-size: 2.2rem; }
+html.big .app.carousel .chalk-foot { font-size: .9rem; }
+html.big .app.carousel .dots i { width: 40px; height: 5px; }
+html.big .app.carousel .freq, html.big .app.carousel #era, html.big .app.carousel #openSettings { display: initial; }
+html.big .app.carousel .fiction { display: block; }
+
 @media (prefers-reduced-motion: reduce) {
   .tk, .onair, .app.flash::before, .body.typing::after, .post.new, .disc, .cam .rec, .app.shake1, .app.shake2 { animation: none; }
   .meter i { transition: none; }
@@ -485,6 +562,8 @@ button, select, input { font: inherit; color: inherit; }
 </style>
 </head>
 <body>
+<div class="frame l" aria-hidden="true"><i></i><b>KB-7</b><i></i></div>
+<div class="frame r" aria-hidden="true"><i></i><b>第七管区</b><i></i></div>
 <div class="app scan" id="app" data-sev="2">
   <header class="top">
     <div class="station"><span class="onair" aria-hidden="true"></span>第七管区 緊急放送網<span class="freq">KB-7 / 4.625MHz</span></div>
@@ -594,6 +673,7 @@ button, select, input { font: inherit; color: inherit; }
       </select>
     </label>
     <label class="row" for="optSound"><span>警報音・呼び鈴</span><input type="checkbox" id="optSound"></label>
+    <p class="note">警報音と呼び鈴の大きさは、このページでは変えられません（「蓄音機」の音量は音楽だけに効きます）。大きさは端末の音量で合わせてください。</p>
     <label class="row" for="optVoice" id="voiceRow"><span>読み上げ</span><input type="checkbox" id="optVoice"></label>
     <p class="note">音は、このページが見えているあいだだけ鳴ります。ホーム画面に戻る・別のアプリに切り替える・画面を消すと、すぐに止まります。戻ってくると自動で再開します（再開しないときは、画面のどこかに触れてください）。</p>
   </div>
@@ -639,6 +719,8 @@ button, select, input { font: inherit; color: inherit; }
     <label class="row" for="optScan"><span>走査線</span><input type="checkbox" id="optScan" checked></label>
     <label class="row" for="optFx"><span>画面の揺れ・明滅</span><input type="checkbox" id="optFx" checked></label>
     <label class="row" for="optTake"><span>画面の乗っ取り</span><input type="checkbox" id="optTake" checked></label>
+    <label class="row" for="optFrame"><span>両端の枠</span><input type="checkbox" id="optFrame" checked></label>
+    <label class="row" for="optSingle"><span>1枚ずつ表示</span><input type="checkbox" id="optSingle"></label>
     <div class="btns">
       <button class="solid" id="nowBtn" type="button">今すぐ次の速報</button>
       <button class="ghost" id="doorBtn" type="button">来訪者を呼ぶ</button>
@@ -646,6 +728,7 @@ button, select, input { font: inherit; color: inherit; }
       <button class="ghost" id="fsBtn" type="button">全画面</button>
     </div>
     <p class="note">地名・施設・組織はすべて架空です。乗っ取りは操作しなくても数秒〜20秒ほどで自動的に終わります。「画面の揺れ・明滅」と「乗っ取り」は急な明るさの変化を含みます。苦手な方は切ってください。</p>
+    <p class="note">「両端の枠」は、iPhoneを横にしたときに左右の切り欠きや画面の角で文字が隠れないよう、左右に枠を立てます。「1枚ずつ表示」は、パソコンや大きな画面でもスマホと同じく、速報の横にパネルを1枚ずつ大きく出して、約11秒ごとに切り替えます（パネルのクリック、または ← → キーで送れます）。小さな画面では、この設定に関係なく1枚ずつになります。</p>
     <p class="note" id="homeNote">iPhone・iPad：共有ボタンから「ホーム画面に追加」して、そのアイコンから開くと、ブラウザの枠なしの全画面になります。</p>
   </div>
 </div>
@@ -656,6 +739,18 @@ button, select, input { font: inherit; color: inherit; }
   <button type="button" id="ctlSound">警報音 切</button>
   <button type="button" id="ctlFs">全画面</button>
   <button type="button" id="ctlSet">設定</button>
+</div>
+<div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="introTitle">
+  <div class="intro-card">
+    <h2 id="introTitle">放送を受信する前に</h2>
+    <ul>
+      <li>ここに出てくる地名・組織・出来事は、すべて架空です。</li>
+      <li><b>警報音と呼び鈴の大きさは、このページでは変えられません。</b>大きめの音で鳴るので、鳴らす前に端末の音量を下げておいてください。音は最初は切れていて、下のバーの「警報音」で入ります。</li>
+      <li>急な明滅と画面の揺れがあります。苦手な方は「設定」→「画面・試す」で切れます。</li>
+      <li>画面をタップすると、下に操作バーが出ます。</li>
+    </ul>
+    <button class="solid" id="introOk" type="button">受信を始める</button>
+  </div>
 </div>
 <div class="fx" id="fx" aria-hidden="true"></div>
 <div class="sagnote" id="sagnote" hidden></div>
@@ -732,7 +827,7 @@ button, select, input { font: inherit; color: inherit; }
     far: { skip: 25, wow: 30, noise: 30, muffle: 90, reverb: 100, speed: 94 },
     nightmare: { skip: 95, wow: 100, noise: 80, muffle: 70, reverb: 90, speed: 62 }
   };
-  const prefs = { interval: 30, sound: false, voice: false, scan: true, fx: true, take: true, piece: 'shuffle', timbre: 'auto', vol: 70, preset: 'worn', e: Object.assign({}, PRESETS.worn) };
+  const prefs = { interval: 30, sound: false, voice: false, scan: true, fx: true, take: true, frame: true, single: false, piece: 'shuffle', timbre: 'auto', vol: 70, preset: 'worn', e: Object.assign({}, PRESETS.worn) };
   try { const s = JSON.parse(localStorage.getItem('kb7-prefs2') || '{}'); Object.assign(prefs, s, { e: Object.assign({}, PRESETS.worn, s.e || {}) }); } catch (e) {}
   const save = () => {
     try { const o = Object.assign({}, prefs); if (o.piece === 'file') o.piece = 'shuffle'; localStorage.setItem('kb7-prefs2', JSON.stringify(o)); } catch (e) {}
@@ -850,8 +945,11 @@ button, select, input { font: inherit; color: inherit; }
     let key = draw1(CAT_DECK); if (key === lastCat) key = draw1(CAT_DECK);
     lastCat = key;
     const K = C.CATS[key], c = { p: place(), f: fac(), o: org(), o2: org(), n: ri(2, 9), t: ago(), d: R(DIR), km: ri(2, 14), l: later() };
-    const head = draw1(K.head)(c);
-    return { sev: R(K.sev), cat: R(K.cat), where: c.p, head, body: draw1(K.a)(c) + draw1(K.b)(c) + draw1(K.c)(c), key, dose: c.dose, out: c.out || (Math.random() < 0.6 ? K.out : ''), dir: c.d, km: c.km };
+    const hf = draw1(K.head), tp = hf.tp, head = hf(c);
+    /* 状況は必ず見出しと同じ話題から。対応と指示は同じ話題を優先し、ときどき分類共通から */
+    const part = (pool, keep) => draw1(pool[tp] && (!pool['*'] || Math.random() < keep) ? pool[tp] : pool['*']);
+    const body = draw1(K.a[tp])(c) + part(K.b, 0.7)(c) + part(K.c, 0.6)(c);
+    return { sev: R(K.sev), cat: R(K.cat), where: c.p, head, body, key, tp, dose: c.dose, out: c.out || (Math.random() < 0.6 ? K.out : ''), dir: c.d, km: c.km };
   }
   function makeLure() {
     const l = draw1(C.LURES)(), t = new Date(), n = ri(12, 140), tr = R(C.TRACES);
@@ -2177,6 +2275,13 @@ button, select, input { font: inherit; color: inherit; }
   $('optFx').addEventListener('change', e => { prefs.fx = e.target.checked; save(); });
   $('optTake').checked = !!prefs.take;
   $('optTake').addEventListener('change', e => { prefs.take = e.target.checked; save(); });
+  /* 両端の枠：iPhoneを横にしたときの切り欠き・角の丸み対策 */
+  const setFrame = on => document.documentElement.classList.toggle('framed', on);
+  $('optFrame').checked = !!prefs.frame; setFrame(!!prefs.frame);
+  $('optFrame').addEventListener('change', e => { prefs.frame = e.target.checked; setFrame(prefs.frame); save(); drawSpark(); });
+  /* 1枚ずつ表示：大きな画面でもスマホと同じ切り替え方式にする */
+  $('optSingle').checked = !!prefs.single;
+  $('optSingle').addEventListener('change', e => { prefs.single = e.target.checked; save(); layout(); });
   $('nowBtn').addEventListener('click', () => issue(false));
   $('doorBtn').addEventListener('click', () => { if (door.v) doorLeave(); doorRing(); toggle(false); });
   $('takeBtn').addEventListener('click', () => { toggle(false); takeover(); });
@@ -2217,7 +2322,17 @@ button, select, input { font: inherit; color: inherit; }
     drawSpark();
   }
   function paneByName(n, hold) { const i = PANES.findIndex(p => p.dataset.pane === n); if (i >= 0 && app.classList.contains('carousel')) showPane(i, hold); }
-  function layout() { app.classList.toggle('carousel', innerWidth <= 600 || innerHeight <= 520); if (app.classList.contains('carousel')) showPane(paneI); drawSpark(); }
+  function layout() {
+    const small = innerWidth <= 600 || innerHeight <= 520;
+    app.classList.toggle('carousel', small || !!prefs.single);
+    document.documentElement.classList.toggle('big', !small && !!prefs.single);     // 大きな画面で1枚ずつ：文字も大きく
+    if (app.classList.contains('carousel')) showPane(paneI);
+    drawSpark();
+  }
+  document.addEventListener('keydown', e => {             // パソコン：← → でパネルを送る
+    if (!app.classList.contains('carousel') || !panel.hidden || e.target.closest('input, select, textarea')) return;
+    if (e.key === 'ArrowRight') showPane(paneI + 1, 20000); else if (e.key === 'ArrowLeft') showPane(paneI - 1, 20000);
+  });
   PANES.forEach(p => p.addEventListener('click', e => { if (app.classList.contains('carousel') && !e.target.closest('button')) { showPane(paneI + 1, 20000); e.stopPropagation(); } }));
   setInterval(() => { if (app.classList.contains('carousel') && Date.now() > paneHold) showPane(paneI + 1); }, 11000);
   addEventListener('resize', layout);
@@ -2242,7 +2357,16 @@ button, select, input { font: inherit; color: inherit; }
   out.timer = setTimeout(outAuto, ri(9000, 16000));
   setTimeout(sag, ri(40000, 90000));
   setTimeout(takeAuto, ri(150000, 300000));
-  showCtl(9000);
+  /* 初回だけ：架空であること、警報音の大きさは変えられないこと、明滅のこと を先に伝える */
+  let seenIntro = false; try { seenIntro = localStorage.getItem('kb7-intro') === '1'; } catch (e) {}
+  if (seenIntro) showCtl(9000);
+  else {
+    $('intro').hidden = false; $('introOk').focus();
+    $('introOk').addEventListener('click', e => {
+      e.stopPropagation(); $('intro').hidden = true; try { localStorage.setItem('kb7-intro', '1'); } catch (err) {}
+      showCtl(9000);
+    });
+  }
   /* 動作確認用の入口（画面からは使わない） */
   window.__kb7 = { takeover, scenes: SCENE_IDS, outTrigger, doorRing, pieces: PIECES.map(p => p.id), outIds: OUT_IDS, things: C.THINGS.length, chatter,
     chalk(i) { chalkPage = i; renderChalk(); }, pane(i) { showPane(i, 600000); }, band, stats, shortage, hush, wake, get acState() { return ac ? ac.state : 'none'; }, get acTime() { return ac ? ac.currentTime : -1; },
