@@ -133,6 +133,6 @@
 
 ## 作った人・連絡先
 
-kakkun15 が個人で作っています。ほかに作ったものは GitHub にまとめています → <https://github.com/kakkun15>
+kakkun15 が個人で作っています。企画と調整は kakkun15 が行い、コードと文面は AI（Claude）と一緒に作っています。ほかに作ったものは GitHub にまとめています → <https://github.com/kakkun15>
 
 動かない・表示が崩れる・音が止まらない・表現が気になる、などがあれば [Issues](https://github.com/kakkun15/shuumatsu-news/issues) から教えてください。使っている端末とブラウザ（例：iPhone の Safari）を書いてもらえると直しやすいです。
