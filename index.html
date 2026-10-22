@@ -236,9 +236,37 @@ img { max-width: 100%; }
   <div class="take-sub" id="takeSub"></div>
 </div>
 
-<script src="content.js"></script>
-<script src="board.js"></script>
-<script src="music.js"></script>
-<script src="app.js"></script>
+<!-- 文面のデータ（速報の分類ごとの部品 → その他の文面 → 掲示板 → 曲） -->
+<script src="data/news/boom.js"></script>
+<script src="data/news/rad.js"></script>
+<script src="data/news/weather.js"></script>
+<script src="data/news/water.js"></script>
+<script src="data/news/food.js"></script>
+<script src="data/news/power.js"></script>
+<script src="data/news/comm.js"></script>
+<script src="data/news/odd.js"></script>
+<script src="data/news/order.js"></script>
+<script src="data/news/move.js"></script>
+<script src="data/news/health.js"></script>
+<script src="data/news/gov.js"></script>
+<script src="data/news/econ.js"></script>
+<script src="data/news/outside.js"></script>
+<script src="data/news/missing.js"></script>
+<script src="data/news/station.js"></script>
+<script src="data/content.js"></script>
+<script src="data/board.js"></script>
+<script src="data/music.js"></script>
+<!-- 動き。js/*.js は名前を共有し、この順に実行される（main.js が最後に全部を起動する） -->
+<script src="js/base.js"></script>
+<script src="js/news.js"></script>
+<script src="js/board.js"></script>
+<script src="js/meters.js"></script>
+<script src="js/door.js"></script>
+<script src="js/outside.js"></script>
+<script src="js/takeover.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/gramophone.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
