@@ -191,6 +191,7 @@ function stopRec() {
 }
 async function startRec() {
   if (rec.busy) return;
+  if (typeof radio !== 'undefined' && radio.on) stopRadio();   // 外の音と盤は同時に流さない
   if (!ensureAudio()) { gramState('この端末では音を出せません'); return; }
   rec.busy = true; gramState('盤を準備中…'); $('gramBox').classList.add('on'); $('gramBtn').textContent = '音楽 停止'; $('gramBtn').classList.add('on');
   try {

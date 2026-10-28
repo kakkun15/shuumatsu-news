@@ -153,8 +153,10 @@ img { max-width: 100%; }
       </select>
     </label>
     <label class="row" for="songFile"><span>自分の曲</span><input type="file" id="songFile" accept="audio/*"></label>
+    <div class="row" id="radioRow"><span>外の音</span><button class="ghost" id="radioBtn" type="button">外の音を拾う</button></div>
     <label class="row" for="optVol"><span>音量</span><input type="range" id="optVol" min="0" max="100" step="1"></label>
     <p class="note">再生・停止と「次の盤」は、画面をタップすると下に出るバーにあります。読み込んだ曲はこの端末の中だけで処理され、ページを閉じると消えます。</p>
+    <p class="note" id="radioNote">「外の音」は、YouTube などほかのタブの音を拾って、この蓄音機の加工（回転むら・ノイズ・こもり・残響）で歪ませて流します。押すと共有するタブを選ぶ画面が出るので、タブを選び「タブの音声も共有する」をオンにしてください。元のタブの音は鳴らなくなり、歪んだ音だけが聞こえます。「針飛び」を上げると電波が途切れるようになります。拾った音はその場で加工して流すだけで、録音・保存・送信はしません。止めるときはこのボタンか、Chrome の「共有を停止」を押してください（パソコンの Chrome・Edge のみ）。</p>
   </div>
   <div class="tab" id="tabC">
     <label class="row" for="preset"><span>盤の状態</span>
@@ -276,6 +278,7 @@ img { max-width: 100%; }
 <script src="js/gramophone.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/pip.js"></script>
+<script src="js/radio.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

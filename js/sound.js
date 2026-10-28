@@ -84,7 +84,8 @@ function applyTone() {                                  // つまみの値を音
   G.send.gain.setTargetAtTime(1.6 * E.reverb / 100, t, 0.2);
   G.vol.gain.setTargetAtTime(prefs.vol / 100 * 0.9, t, 0.05);
   G.crackle.gain.cancelScheduledValues(t);
-  G.crackle.gain.setTargetAtTime(rec.playing ? 0.015 + 0.55 * E.noise / 100 : 0, t + (rec.playing ? 0 : 1.0), 0.1);
+  const playing = rec.playing || (typeof radio !== 'undefined' && radio.on);   // 外の音（js/radio.js）を流している間も
+  G.crackle.gain.setTargetAtTime(playing ? 0.015 + 0.55 * E.noise / 100 : 0, t + (playing ? 0 : 1.0), 0.1);
   rec.rate = E.speed / 100;
 }
 
