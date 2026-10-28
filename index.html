@@ -137,7 +137,8 @@ img { max-width: 100%; }
     <label class="row" for="optSound"><span>警報音・呼び鈴</span><input type="checkbox" id="optSound"></label>
     <p class="note">警報音と呼び鈴の大きさは、このページでは変えられません（「蓄音機」の音量は音楽だけに効きます）。大きさは端末の音量で合わせてください。</p>
     <label class="row" for="optVoice" id="voiceRow"><span>読み上げ</span><input type="checkbox" id="optVoice"></label>
-    <p class="note">音は、このページが見えているあいだだけ鳴ります。ホーム画面に戻る・別のアプリに切り替える・画面を消すと、すぐに止まります。戻ってくると自動で再開します（再開しないときは、画面のどこかに触れてください）。</p>
+    <label class="row" for="optBg"><span>隠れても音を流す</span><input type="checkbox" id="optBg"></label>
+    <p class="note">ふだんは、このページが見えているあいだだけ音が鳴ります。ホーム画面に戻る・別のアプリやタブに切り替える・画面を消すと、すぐに止まり、戻ってくると自動で再開します（再開しないときは、画面のどこかに触れてください）。「隠れても音を流す」を入れると、別のタブを見ていても鳴り続けます（スマホでは、端末の決まりで止まることがあります）。</p>
   </div>
   <div class="tab" id="tabB">
     <label class="row" for="piece"><span>盤</span><select id="piece"></select></label>
@@ -155,7 +156,7 @@ img { max-width: 100%; }
     <label class="row" for="songFile"><span>自分の曲</span><input type="file" id="songFile" accept="audio/*"></label>
     <div class="row" id="radioRow"><span>外の音</span><button class="ghost" id="radioBtn" type="button">外の音を拾う</button></div>
     <label class="row" for="optVol"><span>音量</span><input type="range" id="optVol" min="0" max="100" step="1"></label>
-    <p class="note">再生・停止と「次の盤」は、画面をタップすると下に出るバーにあります。読み込んだ曲はこの端末の中だけで処理され、ページを閉じると消えます。</p>
+    <p class="note">曲の再生・停止と「次の曲へ」「外の音を拾う」は、画面をタップすると下に出るバーにもあります。読み込んだ曲はこの端末の中だけで処理され、ページを閉じると消えます。</p>
     <p class="note" id="radioNote">「外の音」は、YouTube などほかのタブの音を拾って、この蓄音機の加工（回転むら・ノイズ・こもり・残響）で歪ませて流します。押すと共有するタブを選ぶ画面が出るので、タブを選び「タブの音声も共有する」をオンにしてください。元のタブの音は鳴らなくなり、歪んだ音だけが聞こえます。「針飛び」を上げると電波が途切れるようになります。拾った音はその場で加工して流すだけで、録音・保存・送信はしません。止めるときはこのボタンか、Chrome の「共有を停止」を押してください（パソコンの Chrome・Edge のみ）。</p>
   </div>
   <div class="tab" id="tabC">
@@ -211,12 +212,13 @@ img { max-width: 100%; }
 </div>
 <div class="ctl" id="ctl" hidden>
   <div class="ctl-tip">画面をタップすると、このバーが出たり消えたりします</div>
-  <button type="button" id="gramBtn">音楽 再生</button>
-  <button type="button" id="gramNext">次の盤</button>
-  <button type="button" id="ctlSound">警報音 切</button>
-  <button type="button" id="ctlFs">全画面</button>
-  <button type="button" id="ctlPip">小窓</button>
-  <button type="button" id="ctlSet">設定</button>
+  <button type="button" id="gramBtn" title="館内の蓄音機で曲を流す・止める">▶ 曲を流す</button>
+  <button type="button" id="gramNext" title="今の曲を飛ばして次の曲へ">次の曲へ</button>
+  <button type="button" id="ctlRadio" title="YouTube などほかのタブの音を拾って、古いラジオのように歪ませる">外の音を拾う</button>
+  <button type="button" id="ctlSound" title="速報の警報音と玄関の呼び鈴">警報音：オフ</button>
+  <button type="button" id="ctlFs" title="画面いっぱいに表示する">全画面</button>
+  <button type="button" id="ctlPip" title="ほかの作業をしながら見られる、最前面の小さな窓に出す">小窓</button>
+  <button type="button" id="ctlSet" title="受信機の設定">設定</button>
 </div>
 <div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="introTitle">
   <div class="intro-card">

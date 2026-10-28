@@ -5,8 +5,8 @@ let pipWin = null;
 const $ = id => document.getElementById(id) || (pipWin ? pipWin.document.getElementById(id) : null);
 /* 消音：小窓の「消音」ボタンで、すべての音（警報・曲・読み上げ）を止める。もう一度押すと戻る */
 let muted = false;
-/* 「鳴らさない」とき：消音中か、タブが隠れていて小窓も開いていないとき。音を止める判断に使う */
-const unseen = () => muted || (document.hidden && !pipWin);
+/* 「鳴らさない」とき：消音中か、タブが隠れていて小窓も開いておらず「隠れても音を流す」も切ってあるとき */
+const unseen = () => muted || (document.hidden && !pipWin && !prefs.bgPlay);
 const R = a => a[Math.floor(Math.random() * a.length)];
 const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pad = n => String(n).padStart(2, '0');
@@ -67,7 +67,7 @@ const PRESETS = {
   far: { skip: 25, wow: 30, noise: 30, muffle: 90, reverb: 100, speed: 94 },
   nightmare: { skip: 95, wow: 100, noise: 80, muffle: 70, reverb: 90, speed: 62 }
 };
-const prefs = { interval: 30, sound: false, voice: false, scan: true, fx: true, take: true, frame: true, single: false, piece: 'shuffle', timbre: 'auto', vol: 70, preset: 'worn', e: Object.assign({}, PRESETS.worn) };
+const prefs = { interval: 30, sound: false, voice: false, scan: true, fx: true, take: true, frame: true, single: false, bgPlay: false, piece: 'shuffle', timbre: 'auto', vol: 70, preset: 'worn', e: Object.assign({}, PRESETS.worn) };
 try { const s = JSON.parse(localStorage.getItem('kb7-prefs2') || '{}'); Object.assign(prefs, s, { e: Object.assign({}, PRESETS.worn, s.e || {}) }); } catch (e) {}
 const save = () => {
   try { const o = Object.assign({}, prefs); if (o.piece === 'file') o.piece = 'shuffle'; localStorage.setItem('kb7-prefs2', JSON.stringify(o)); } catch (e) {}

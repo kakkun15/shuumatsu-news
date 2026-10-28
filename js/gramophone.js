@@ -187,19 +187,19 @@ function haltSources() {
 function stopRec() {
   rec.playing = false; clearTimeout(rec.timer);
   if (ac) haltSources();
-  applyTone(); $('gramBtn').textContent = '音楽 再生'; $('gramBtn').classList.remove('on'); $('gramBox').classList.remove('on'); gramState('停止中');
+  applyTone(); $('gramBtn').textContent = '▶ 曲を流す'; $('gramBtn').classList.remove('on'); $('gramBox').classList.remove('on'); gramState('停止中');
 }
 async function startRec() {
   if (rec.busy) return;
   if (typeof radio !== 'undefined' && radio.on) stopRadio();   // 外の音と盤は同時に流さない
   if (!ensureAudio()) { gramState('この端末では音を出せません'); return; }
-  rec.busy = true; gramState('盤を準備中…'); $('gramBox').classList.add('on'); $('gramBtn').textContent = '音楽 停止'; $('gramBtn').classList.add('on');
+  rec.busy = true; gramState('盤を準備中…'); $('gramBox').classList.add('on'); $('gramBtn').textContent = '■ 曲を止める'; $('gramBtn').classList.add('on');
   try {
     await loadNext();
     rec.playing = true; rec.changing = false; rec.spin = true;
     rec.endAt = ac.currentTime + 0.25;
     applyTone(); pump();
-  } catch (e) { gramState('盤を読めませんでした'); $('gramBox').classList.remove('on'); $('gramBtn').textContent = '音楽 再生'; $('gramBtn').classList.remove('on'); }
+  } catch (e) { gramState('盤を読めませんでした'); $('gramBox').classList.remove('on'); $('gramBtn').textContent = '▶ 曲を流す'; $('gramBtn').classList.remove('on'); }
   rec.busy = false;
 }
 async function restartRec() { if (rec.playing || rec.busy) { stopRec(); await new Promise(r => setTimeout(r, 60)); } startRec(); }
@@ -218,6 +218,6 @@ function wake() {
   try { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
 }
 document.addEventListener('visibilitychange', () => { if (unseen()) hush(); else wake(); });
-addEventListener('pagehide', () => { if (!pipWin) hush(); }); addEventListener('pageshow', wake); addEventListener('focus', wake);
+addEventListener('pagehide', () => { if (!pipWin && !prefs.bgPlay) hush(); }); addEventListener('pageshow', wake); addEventListener('focus', wake);
 ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, () => { if (ac && ac.state !== 'running') wake(); }, true));   // 自動で戻らなかったときは、次に触れた瞬間に戻す
 document.addEventListener('pointerdown', keepAwake, { once: true });

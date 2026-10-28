@@ -32,7 +32,7 @@ async function startRadio() {
   radio.on = true;
   stream.getTracks().forEach(t => t.addEventListener('ended', stopRadio));   // Chrome の「共有を停止」を押されたとき
   applyTone();
-  $('radioBtn').textContent = '外の音 止める'; $('radioBtn').classList.add('on'); $('gramBox').classList.add('on');
+  radioLabel(true); $('gramBox').classList.add('on');
   gramState('外の音を受信中');
   radio.timer = setTimeout(radioGlitch, ri(4000, 9000));
 }
@@ -58,9 +58,14 @@ function stopRadio() {
   radio.stream.getTracks().forEach(t => { t.removeEventListener('ended', stopRadio); t.stop(); });
   radio.stream = radio.src = radio.gain = null;
   applyTone();
-  $('radioBtn').textContent = '外の音を拾う'; $('radioBtn').classList.remove('on');
+  radioLabel(false);
   if (!rec.playing) { $('gramBox').classList.remove('on'); gramState('停止中'); }
 }
 
-if (!canRadio) { $('radioRow').hidden = true; $('radioNote').hidden = true; }
-$('radioBtn').addEventListener('click', () => { radio.on ? stopRadio() : startRadio(); });
+function radioLabel(on) {                              // 設定と操作バーの2か所のボタンをそろえる
+  ['radioBtn', 'ctlRadio'].forEach(id => { const b = $(id); b.textContent = on ? '外の音を止める' : '外の音を拾う'; b.classList.toggle('on', on); });
+}
+if (!canRadio) { $('radioRow').hidden = true; $('radioNote').hidden = true; $('ctlRadio').hidden = true; }
+const radioClick = () => { radio.on ? stopRadio() : startRadio(); };
+$('radioBtn').addEventListener('click', radioClick);
+$('ctlRadio').addEventListener('click', radioClick);

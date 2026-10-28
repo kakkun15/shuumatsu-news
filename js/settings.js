@@ -15,7 +15,7 @@ sel.addEventListener('change', () => { prefs.interval = +sel.value; nextAt = Dat
 $('optSound').checked = false; prefs.sound = false;   /* 音は操作してからでないと鳴らせない */
 $('optSound').addEventListener('change', e => {
   prefs.sound = e.target.checked; if (prefs.sound && ensureAudio()) chime(1);
-  $('ctlSound').textContent = prefs.sound ? '警報音 入' : '警報音 切'; $('ctlSound').classList.toggle('on', prefs.sound);
+  $('ctlSound').textContent = prefs.sound ? '警報音：オン' : '警報音：オフ'; $('ctlSound').classList.toggle('on', prefs.sound);
 });
 if (!('speechSynthesis' in window)) $('voiceRow').hidden = true;
 $('optVoice').checked = false; prefs.voice = false;
@@ -106,6 +106,8 @@ const ctl = $('ctl'); let ctlT = 0;
 function showCtl(ms) { ctl.hidden = false; clearTimeout(ctlT); ctlT = setTimeout(() => { ctl.hidden = true; }, ms || 6000); }
 app.addEventListener('click', e => { if (e.target.closest('button, a, input, select, label')) return; if (pipWin) return; if (ctl.hidden) showCtl(); else ctl.hidden = true; });
 ctl.addEventListener('click', () => showCtl());
+$('optBg').checked = !!prefs.bgPlay;
+$('optBg').addEventListener('change', e => { prefs.bgPlay = e.target.checked; save(); if (unseen()) hush(); else wake(); });
 $('ctlSound').addEventListener('click', () => { const c = $('optSound'); c.checked = !c.checked; c.dispatchEvent(new Event('change')); });
 $('ctlSet').addEventListener('click', () => { ctl.hidden = true; toggle(true); });
 
