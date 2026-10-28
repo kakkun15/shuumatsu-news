@@ -213,10 +213,10 @@ document.addEventListener('visibilitychange', keepAwake);
 /* ページが見えなくなったら（ホームに戻る・別のアプリやタブ・画面を消す）、音をすべて止める。戻ったら黙って再開する */
 function hush() { try { if (ac && ac.state === 'running') ac.suspend(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} }
 function wake() {
-  if (!ac || document.hidden) return;
+  if (!ac || unseen()) return;
   try { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) hush(); else wake(); });
-addEventListener('pagehide', hush); addEventListener('pageshow', wake); addEventListener('focus', wake);
+document.addEventListener('visibilitychange', () => { if (unseen()) hush(); else wake(); });
+addEventListener('pagehide', () => { if (!pipWin) hush(); }); addEventListener('pageshow', wake); addEventListener('focus', wake);
 ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, () => { if (ac && ac.state !== 'running') wake(); }, true));   // 自動で戻らなかったときは、次に触れた瞬間に戻す
 document.addEventListener('pointerdown', keepAwake, { once: true });

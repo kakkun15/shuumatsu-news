@@ -40,6 +40,7 @@
 | `js/sound.js` | 音の配線・効果音・警報・呼び鈴・読み上げ（`ensureAudio` `sfx` `siren`） |
 | `js/gramophone.js` | 館内蓄音機（`TIMBRES` `renderPiece` `startRec`）・画面の消灯防止 |
 | `js/settings.js` | 設定シート・操作バー・全画面・パネル切り替え（`layout` `showPane`） |
+| `js/pip.js` | 小窓（最前面の小さな窓。`openPip` `closedPip`）。開くと `#app` などを小窓の文書へ移す。`$()` は両方から探す |
 | `js/main.js` | 起動とタイマー開始・動作確認用の `window.__kb7` |
 | `data/news/<分類>.js` | 速報の部品。1分類1ファイル（boom 爆発, rad 放射線, weather 気象, water 給水, food 配給, power 電力, comm 通信, odd 異常, order 治安, move 交通, health 衛生, gov 行政, econ 経済, outside 壁外, missing 行方不明, station 局から） |
 | `data/content.js` | その他の文面：一点もの・親切そうな放送・続きもの・通達・来訪者・掲示板の共通部分・乗っ取り・壁外カメラ・人以外の来訪 |

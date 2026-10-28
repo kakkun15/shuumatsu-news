@@ -146,7 +146,7 @@ function duck(t, hold) {
 }
 function duckMusic(hold) { if (ac && G) { try { duck(ac.currentTime, hold); } catch (e) {} } }
 function chime(sev) {
-  if (!prefs.sound || !ac || take.busy || document.hidden) return;
+  if (!prefs.sound || !ac || take.busy || unseen()) return;
   try {
     const t0 = ac.currentTime + 0.05;
     if (sev === 4) { duck(t0, 4.5); staticBurst(t0, 0.4, 0.2); bells(t0 + 0.5); return; }
@@ -174,7 +174,7 @@ function chime(sev) {
   } catch (e) {}
 }
 function sfx(kind, len) {                             // 乗っ取り演出の効果音
-  if (!prefs.sound || !ac || document.hidden) return;
+  if (!prefs.sound || !ac || unseen()) return;
   try {
     const t = ac.currentTime + 0.03;
     if (kind === 'static') staticBurst(t, len || 0.5, 0.45);
@@ -197,7 +197,7 @@ function dingdong(t, sick) {
   });
 }
 function doorSound(v) {
-  if (!prefs.sound || !ac || take.busy || document.hidden) return;
+  if (!prefs.sound || !ac || take.busy || unseen()) return;
   try {
     const t = ac.currentTime + 0.05; duck(t, 3);
     if (v.sound === 'knock') { for (let i = 0; i < 5; i++) thud(t + i * 0.34, 0.8); }
@@ -206,7 +206,7 @@ function doorSound(v) {
   } catch (e) {}
 }
 function speak(text) {
-  if (!prefs.voice || !('speechSynthesis' in window) || document.hidden) return;
+  if (!prefs.voice || !('speechSynthesis' in window) || unseen()) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);

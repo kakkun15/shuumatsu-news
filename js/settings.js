@@ -104,7 +104,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click
 /* ---- 操作バー：画面をタップすると下に出る ---- */
 const ctl = $('ctl'); let ctlT = 0;
 function showCtl(ms) { ctl.hidden = false; clearTimeout(ctlT); ctlT = setTimeout(() => { ctl.hidden = true; }, ms || 6000); }
-app.addEventListener('click', e => { if (e.target.closest('button, a, input, select, label')) return; if (ctl.hidden) showCtl(); else ctl.hidden = true; });
+app.addEventListener('click', e => { if (e.target.closest('button, a, input, select, label')) return; if (pipWin) return; if (ctl.hidden) showCtl(); else ctl.hidden = true; });
 ctl.addEventListener('click', () => showCtl());
 $('ctlSound').addEventListener('click', () => { const c = $('optSound'); c.checked = !c.checked; c.dispatchEvent(new Event('change')); });
 $('ctlSet').addEventListener('click', () => { ctl.hidden = true; toggle(true); });
@@ -122,16 +122,17 @@ function showPane(i, hold) {
 }
 function paneByName(n, hold) { const i = PANES.findIndex(p => p.dataset.pane === n); if (i >= 0 && app.classList.contains('carousel')) showPane(i, hold); }
 function layout() {
-  const small = innerWidth <= 600 || innerHeight <= 520;
+  const w = pipWin || window, small = w.innerWidth <= 600 || w.innerHeight <= 520;
   app.classList.toggle('carousel', small || !!prefs.single);
-  document.documentElement.classList.toggle('big', !small && !!prefs.single);     // 大きな画面で1枚ずつ：文字も大きく
+  w.document.documentElement.classList.toggle('big', !small && !!prefs.single);     // 大きな画面で1枚ずつ：文字も大きく
   if (app.classList.contains('carousel')) showPane(paneI);
   drawSpark();
 }
-document.addEventListener('keydown', e => {             // パソコン：← → でパネルを送る
+function paneKey(e) {                                   // パソコン：← → でパネルを送る（小窓の中でも）
   if (!app.classList.contains('carousel') || !panel.hidden || e.target.closest('input, select, textarea')) return;
   if (e.key === 'ArrowRight') showPane(paneI + 1, 20000); else if (e.key === 'ArrowLeft') showPane(paneI - 1, 20000);
-});
+}
+document.addEventListener('keydown', paneKey);
 PANES.forEach(p => p.addEventListener('click', e => { if (app.classList.contains('carousel') && !e.target.closest('button')) { showPane(paneI + 1, 20000); e.stopPropagation(); } }));
 setInterval(() => { if (app.classList.contains('carousel') && Date.now() > paneHold) showPane(paneI + 1); }, 11000);
 addEventListener('resize', layout);

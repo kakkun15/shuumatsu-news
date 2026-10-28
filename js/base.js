@@ -1,6 +1,10 @@
 /* 第七管区 緊急放送網：共通の道具・架空の固有名詞・設定の保存・闇市相場と配給所の黒板・文面の部品の読み込み。
    js/*.js はすべて同じ広さの名前を共有する（index.html の読み込み順に実行）。名前の重複に注意。 */
-const $ = id => document.getElementById(id);
+/* 小窓（最前面の小さな窓）：開いている間は画面の本体がそちらの文書へ移るので、両方から探す */
+let pipWin = null;
+const $ = id => document.getElementById(id) || (pipWin ? pipWin.document.getElementById(id) : null);
+/* 「見えていない」：タブが隠れていて、小窓も開いていないとき。音を止める判断に使う */
+const unseen = () => document.hidden && !pipWin;
 const R = a => a[Math.floor(Math.random() * a.length)];
 const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pad = n => String(n).padStart(2, '0');

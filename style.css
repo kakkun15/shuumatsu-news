@@ -547,3 +547,7 @@ html.big .app.carousel .fiction { display: block; }
   .tk, .onair, .app.flash::before, .body.typing::after, .post.new, .disc, .cam .rec, .app.shake1, .app.shake2 { animation: none; }
   .meter i { transition: none; }
 }
+
+/* --- 小窓（最前面の小さな窓）を開いている間、元の画面に出す案内 --- */
+.pip-stub { position: fixed; inset: 0; display: grid; place-content: center; gap: 16px; text-align: center; color: var(--dim); }
+.pip-stub p { margin: 0; letter-spacing: .1em; }

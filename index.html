@@ -187,9 +187,11 @@ img { max-width: 100%; }
       <button class="ghost" id="doorBtn" type="button">来訪者を呼ぶ</button>
       <button class="ghost" id="takeBtn" type="button">乗っ取りを起こす</button>
       <button class="ghost" id="fsBtn" type="button">全画面</button>
+      <button class="ghost" id="pipBtn" type="button">小窓</button>
     </div>
     <p class="note">地名・施設・組織はすべて架空です。乗っ取りは操作しなくても数秒〜20秒ほどで自動的に終わります。「画面の揺れ・明滅」と「乗っ取り」は急な明るさの変化を含みます。苦手な方は切ってください。</p>
     <p class="note">「両端の枠」は、iPhoneを横にしたときに左右の切り欠きや画面の角で文字が隠れないよう、左右に枠を立てます。「1枚ずつ表示」は、パソコンや大きな画面でもスマホと同じく、速報の横にパネルを1枚ずつ大きく出して、約11秒ごとに切り替えます（パネルのクリック、または ← → キーで送れます）。小さな画面では、この設定に関係なく1枚ずつになります。</p>
+    <p class="note" id="pipNote">「小窓」は、ほかの作業をしながら見られるよう、放送を最前面の小さな窓に出します（パソコンの Chrome・Edge のみ。窓の端を引っぱって大きさを変えられます。閉じると元の画面に戻ります）。</p>
     <p class="note" id="homeNote">iPhone・iPad：共有ボタンから「ホーム画面に追加」して、そのアイコンから開くと、ブラウザの枠なしの全画面になります。</p>
   </div>
   <div class="tab" id="tabE">
@@ -210,6 +212,7 @@ img { max-width: 100%; }
   <button type="button" id="gramNext">次の盤</button>
   <button type="button" id="ctlSound">警報音 切</button>
   <button type="button" id="ctlFs">全画面</button>
+  <button type="button" id="ctlPip">小窓</button>
   <button type="button" id="ctlSet">設定</button>
 </div>
 <div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="introTitle">
@@ -226,6 +229,10 @@ img { max-width: 100%; }
       <button class="solid" id="introOk" type="button">受信を始める</button>
     </div>
   </div>
+</div>
+<div class="pip-stub" id="pipStub" hidden>
+  <p>放送は小窓で受信中です</p>
+  <button class="solid" id="pipBack" type="button">この画面に戻す</button>
 </div>
 <div class="fx" id="fx" aria-hidden="true"></div>
 <div class="sagnote" id="sagnote" hidden></div>
@@ -267,6 +274,7 @@ img { max-width: 100%; }
 <script src="js/sound.js"></script>
 <script src="js/gramophone.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/pip.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
