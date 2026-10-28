@@ -551,3 +551,6 @@ html.big .app.carousel .fiction { display: block; }
 /* --- 小窓（最前面の小さな窓）を開いている間、元の画面に出す案内 --- */
 .pip-stub { position: fixed; inset: 0; display: grid; place-content: center; gap: 16px; text-align: center; color: var(--dim); }
 .pip-stub p { margin: 0; letter-spacing: .1em; }
+.top #muteBtn { display: none; }
+html.inpip .top #muteBtn, .top #muteBtn.on { display: inline-block; min-height: 32px; padding: 0 12px; margin-left: auto; }
+html.inpip .top #muteBtn.on { color: var(--ink); background: var(--amber); border-color: var(--amber); }

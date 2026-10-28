@@ -3,8 +3,10 @@
 /* 小窓（最前面の小さな窓）：開いている間は画面の本体がそちらの文書へ移るので、両方から探す */
 let pipWin = null;
 const $ = id => document.getElementById(id) || (pipWin ? pipWin.document.getElementById(id) : null);
-/* 「見えていない」：タブが隠れていて、小窓も開いていないとき。音を止める判断に使う */
-const unseen = () => document.hidden && !pipWin;
+/* 消音：小窓の「消音」ボタンで、すべての音（警報・曲・読み上げ）を止める。もう一度押すと戻る */
+let muted = false;
+/* 「鳴らさない」とき：消音中か、タブが隠れていて小窓も開いていないとき。音を止める判断に使う */
+const unseen = () => muted || (document.hidden && !pipWin);
 const R = a => a[Math.floor(Math.random() * a.length)];
 const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pad = n => String(n).padStart(2, '0');

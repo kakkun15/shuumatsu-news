@@ -18,6 +18,7 @@ async function openPip() {
     // 見た目（<style> と読み込み済みのスタイルシート）を写す
     document.querySelectorAll('style, link[rel="stylesheet"]').forEach(n => d.head.append(n.cloneNode(true)));
     d.documentElement.classList.toggle('framed', false);       // 小窓に切り欠きはないので枠は出さない
+    d.documentElement.classList.add('inpip');                  // 小窓の中では「消音」ボタンを出す
     const els = PIP_MOVE.map(id => document.getElementById(id));
     const marks = els.map(el => { const m = document.createComment('pip'); el.before(m); return m; });   // 戻す場所の目印
     pipWin = w;
@@ -53,3 +54,11 @@ if (!canPip) { $('pipBtn').hidden = true; $('ctlPip').hidden = true; $('pipNote'
 $('pipBtn').addEventListener('click', openPip);
 $('ctlPip').addEventListener('click', openPip);
 $('pipBack').addEventListener('click', closePip);
+
+/* 消音：すぐ音を切りたいときに。小窓を閉じても、もう一度押すまで消音のまま（消音中は元の画面にもボタンが出る） */
+function setMute(on) {
+  muted = on;
+  const b = $('muteBtn'); b.textContent = on ? '消音中' : '消音'; b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on);
+  if (on) hush(); else wake();
+}
+$('muteBtn').addEventListener('click', e => { e.stopPropagation(); setMute(!muted); });
